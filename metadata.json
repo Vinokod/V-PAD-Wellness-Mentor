@@ -1,0 +1,8 @@
+{
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "name": "Wellness Mentor",
+  "description": "Metabolic health implementation platform, powered by the AI Powered V-PAD™ Experience & Value Platform."
+}
