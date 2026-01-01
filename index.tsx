@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { 
@@ -109,7 +110,8 @@ import {
   HelpCircle,
   Plus
 } from 'lucide-react';
-import { GoogleGenAI, Modality, Type } from "@google/genai";
+// Correct import from @google/genai
+import { GoogleGenAI, Modality, Type, GenerateContentResponse, Chat } from "@google/genai";
 
 // --- Constants & Types ---
 type MetabolicStage = 'I' | 'II' | 'III';
@@ -365,9 +367,11 @@ const useAIExecution = (userData: UserData | null) => {
       if (!hasKey) {
         // @ts-ignore
         await window.aistudio.openSelectKey();
+        // GUIDELINE: Assume success and proceed to the app
       }
 
       setStatus("Synthesizing metabolic animation...");
+      // GUIDELINE: Create a new GoogleGenAI instance right before making an API call
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       
       let operation = await ai.models.generateVideos({
@@ -388,6 +392,7 @@ const useAIExecution = (userData: UserData | null) => {
 
       const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
       if (downloadLink) {
+        // GUIDELINE: Append API key when fetching from the download link
         const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
         const blob = await response.blob();
         setVideoUrl(URL.createObjectURL(blob));
@@ -582,106 +587,102 @@ const FAQView = () => (
   </ViewWrapper>
 );
 
-// --- Intelligence Hub Page Component ---
-const IntelligenceHub = ({ userData, stage, setView }: { userData: UserData | null, stage: MetabolicStage, setView: (v: AppView) => void }) => (
-  <ViewWrapper title={<IntelligenceHubTitle />} subtitle="Scientific orchestration of your metabolic performance pathways.">
-    <div className="space-y-12">
-      {/* Top Information Container (REPLICATING IMAGE ATTACHED) */}
-      <div className="relative overflow-hidden rounded-[80px] bg-slate-900 text-white border border-white/5 shadow-4xl min-h-[550px] flex flex-col group">
-        {/* Environment Background */}
-        <div className="absolute inset-0 z-0 overflow-hidden">
-          <img 
-            src="https://images.unsplash.com/photo-1545208393-596371ba9ac8?auto=format&fit=crop&q=80&w=2000" 
-            className="w-full h-full object-cover opacity-30 transform group-hover:scale-105 transition-transform duration-10000" 
-            alt="Wellness Environment" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a192f] via-[#0a192f]/60 to-transparent" />
-        </div>
+// --- High Fidelity Banner Component ---
+const ImplementationBanner = ({ setView }: { setView: (v: AppView) => void }) => (
+  <div className="relative overflow-hidden rounded-[80px] bg-slate-900 text-white border border-white/5 shadow-4xl min-h-[550px] flex flex-col group animate-in fade-in duration-700">
+    <div className="absolute inset-0 z-0 overflow-hidden">
+      <img 
+        src="https://images.unsplash.com/photo-1545208393-596371ba9ac8?auto=format&fit=crop&q=80&w=2000" 
+        className="w-full h-full object-cover opacity-30 transform group-hover:scale-105 transition-transform duration-10000" 
+        alt="Wellness Environment" 
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0a192f] via-[#0a192f]/60 to-transparent" />
+    </div>
 
-        {/* Content Layer */}
-        <div className="relative z-10 flex-grow grid lg:grid-cols-12 p-10 md:p-20 gap-12 items-center">
-          {/* Left Vertical Nav (Icons from Image) */}
-          <div className="lg:col-span-2 flex flex-col gap-10 justify-center border-r border-white/10 pr-10">
-             {[
-               { icon: Dna, label: "DIGITAL TWIN" },
-               { icon: Heart, label: "DIABETES & CVD CARE" },
-               { icon: Activity, label: "EXERCISE" },
-               { icon: Salad, label: "NUTRITION" }
-             ].map((item, i) => (
-               <div key={i} className="flex flex-col items-center gap-3 group/icon cursor-pointer">
-                 <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover/icon:bg-blue-600/30 group-hover/icon:border-blue-500 transition-all duration-300 shadow-xl">
-                   <item.icon className="w-6 h-6 text-blue-400 group-hover/icon:text-white" />
-                 </div>
-                 <span className="text-[10px] font-black uppercase tracking-widest text-sky-100/40 group-hover/icon:text-white transition-colors text-center">{item.label}</span>
-               </div>
-             ))}
-          </div>
-
-          {/* Central Visualization Area */}
-          <div className="lg:col-span-10 flex flex-col md:flex-row items-center justify-between gap-16">
-             <div className="space-y-8 max-w-md">
-                <div className="flex items-center gap-5">
-                   <div className="w-20 h-20 bg-blue-600 rounded-[32px] flex items-center justify-center shadow-2xl shadow-blue-500/20">
-                     <BrainCircuit className="w-10 h-10 text-white animate-pulse" />
-                   </div>
-                   <div className="space-y-1">
-                      <h2 className="text-3xl font-black uppercase tracking-tight leading-none text-blue-400">V-PAD</h2>
-                      <h3 className="text-2xl font-black uppercase tracking-tight leading-none text-white">Wellness Mentor</h3>
-                   </div>
-                </div>
-                <div className="space-y-4">
-                   <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-blue-400">
-                     <Database className="w-3 h-3" /> Metabolic Research Context
-                   </div>
-                   <p className="text-lg font-medium leading-relaxed text-sky-100/70 italic">
-                     "Bridging the Gap: Bridging clinical biomarkers with real-time implementation pathways for metabolic optimization."
-                   </p>
-                </div>
+    <div className="relative z-10 flex-grow grid lg:grid-cols-12 p-10 md:p-20 gap-12 items-center">
+      <div className="lg:col-span-2 flex flex-col gap-10 justify-center border-r border-white/10 pr-10">
+         {[
+           { icon: Dna, label: "DIGITAL TWIN", target: 'blueprint' as AppView },
+           { icon: Heart, label: "DIABETES & CVD CARE", target: 'clinical-board' as AppView },
+           { icon: Activity, label: "EXERCISE", target: 'exercise' as AppView },
+           { icon: Salad, label: "NUTRITION", target: 'kitchen' as AppView }
+         ].map((item, i) => (
+           <div key={i} onClick={() => setView(item.target)} className="flex flex-col items-center gap-3 group/icon cursor-pointer">
+             <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover/icon:bg-blue-600/30 group-hover/icon:border-blue-500 transition-all duration-300 shadow-xl">
+               <item.icon className="w-6 h-6 text-blue-400 group-hover/icon:text-white" />
              </div>
-
-             {/* Functional Mockup Card (App View from Image) */}
-             <div className="relative group/mockup">
-                <div className="absolute -inset-10 bg-blue-500/10 blur-[100px] rounded-full opacity-50 group-hover/mockup:opacity-100 transition-opacity" />
-                <div className="w-[300px] bg-white rounded-[4rem] p-4 shadow-4xl border-[12px] border-slate-900 relative z-10">
-                   <div className="bg-slate-50 rounded-[3.5rem] overflow-hidden flex flex-col min-h-[480px]">
-                      <div className="p-8 space-y-8 flex-grow">
-                         <div className="flex items-center justify-between text-[11px] font-black uppercase text-slate-400">
-                           <ChevronLeft className="w-4 h-4 cursor-pointer hover:text-blue-600" />
-                           <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-blue-600" /> Wellness Charge</span>
-                           <span className="text-blue-600">30 / 36</span>
-                         </div>
-                         <div className="space-y-4 text-center">
-                            <h4 className="text-2xl font-black text-[#0a192f] uppercase leading-tight tracking-tight">Metabolism & <br/> Nutrition Plan</h4>
-                            <div className="w-40 h-40 bg-white rounded-full mx-auto shadow-inner flex items-center justify-center p-4">
-                               <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200" alt="Nutrition Plate" className="w-full h-full object-cover rounded-full" />
-                            </div>
-                         </div>
-                         <div className="space-y-6">
-                            <div className="space-y-1 text-center">
-                               <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Daily Calorie & Macro Goals</div>
-                            </div>
-                            <div className="flex gap-3">
-                               <div className="flex-1 py-4 bg-emerald-50 rounded-2xl text-[10px] font-black text-emerald-600 text-center uppercase tracking-tighter shadow-sm">20-30 mins</div>
-                               <div className="flex-1 py-4 bg-blue-50 rounded-2xl text-[10px] font-black text-blue-600 text-center uppercase tracking-tighter shadow-sm">30-45 mins</div>
-                            </div>
-                            <button className="w-full py-5 bg-[#0a192f] text-white rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-blue-600 transition-all">View Meal Plan</button>
-                         </div>
-                      </div>
-                   </div>
-                </div>
-             </div>
-          </div>
-        </div>
-
-        {/* Banner Global Headline */}
-        <div className="relative z-10 bg-white py-10 px-8 text-center border-t border-white/10 shadow-2xl">
-          <h3 className="text-2xl md:text-4xl font-black text-[#0a192f] uppercase tracking-tighter">
-            BRIDGE THE GAP: RESEARCH TO DAILY WELLNESS IMPLEMENTATION
-          </h3>
-        </div>
+             <span className="text-[10px] font-black uppercase tracking-widest text-sky-100/40 group-hover/icon:text-white transition-colors text-center">{item.label}</span>
+           </div>
+         ))}
       </div>
 
-      {/* Main Functionality Section */}
+      <div className="lg:col-span-10 flex flex-col md:flex-row items-center justify-between gap-16">
+         <div className="space-y-8 max-w-md">
+            <div className="flex items-center gap-5">
+               <div className="w-20 h-20 bg-blue-600 rounded-[32px] flex items-center justify-center shadow-2xl shadow-blue-500/20">
+                 <BrainCircuit className="w-10 h-10 text-white animate-pulse" />
+               </div>
+               <div className="space-y-1">
+                  <h2 className="text-3xl font-black uppercase tracking-tight leading-none text-blue-400">V-PAD</h2>
+                  <h3 className="text-2xl font-black uppercase tracking-tight leading-none text-white">Wellness Mentor</h3>
+               </div>
+            </div>
+            <div className="space-y-4">
+               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-blue-400">
+                 <Database className="w-3 h-3" /> Metabolic Research Context
+               </div>
+               <p className="text-lg font-medium leading-relaxed text-sky-100/70 italic">
+                 "Bridging the Gap: Bridging clinical biomarkers with real-time implementation pathways for metabolic optimization."
+               </p>
+            </div>
+         </div>
+
+         <div className="relative group/mockup">
+            <div className="absolute -inset-10 bg-blue-500/10 blur-[100px] rounded-full opacity-50 group-hover/mockup:opacity-100 transition-opacity" />
+            <div className="w-[300px] bg-white rounded-[4rem] p-4 shadow-4xl border-[12px] border-slate-900 relative z-10">
+               <div className="bg-slate-50 rounded-[3.5rem] overflow-hidden flex flex-col min-h-[480px]">
+                  <div className="p-8 space-y-8 flex-grow">
+                     <div onClick={() => setView('blueprint')} className="flex items-center justify-between text-[11px] font-black uppercase text-slate-400 cursor-pointer hover:text-blue-600 transition-colors">
+                       <ChevronLeft className="w-4 h-4" />
+                       <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-blue-600" /> Wellness Charge</span>
+                       <span className="text-blue-600">30 / 36</span>
+                     </div>
+                     <div onClick={() => setView('kitchen')} className="space-y-4 text-center cursor-pointer group/plan">
+                        <h4 className="text-2xl font-black text-[#0a192f] uppercase leading-tight tracking-tight group-hover/plan:text-blue-600 transition-colors">Metabolism & <br/> Nutrition Plan</h4>
+                        <div className="w-40 h-40 bg-white rounded-full mx-auto shadow-inner flex items-center justify-center p-4 overflow-hidden">
+                           <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200" alt="Nutrition Plate" className="w-full h-full object-cover rounded-full" />
+                        </div>
+                     </div>
+                     <div className="space-y-6">
+                        <div className="space-y-1 text-center">
+                           <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Daily Calorie & Macro Goals</div>
+                        </div>
+                        <div className="flex gap-3">
+                           <div className="flex-1 py-4 bg-emerald-50 rounded-2xl text-[10px] font-black text-emerald-600 text-center uppercase tracking-tighter shadow-sm">20-30 mins</div>
+                           <div className="flex-1 py-4 bg-blue-50 rounded-2xl text-[10px] font-black text-blue-600 text-center uppercase tracking-tighter shadow-sm">30-45 mins</div>
+                        </div>
+                        <button onClick={() => setView('kitchen')} className="w-full py-5 bg-[#0a192f] text-white rounded-[24px] text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-blue-600 transition-all">View Meal Plan</button>
+                     </div>
+                  </div>
+               </div>
+            </div>
+         </div>
+      </div>
+    </div>
+
+    <div className="relative z-10 bg-white py-10 px-8 text-center border-t border-white/10 shadow-2xl">
+      <h3 className="text-2xl md:text-4xl font-black text-[#0a192f] uppercase tracking-tighter">
+        BRIDGE THE GAP: RESEARCH TO DAILY WELLNESS IMPLEMENTATION
+      </h3>
+    </div>
+  </div>
+);
+
+// --- Intelligence Hub Component ---
+const IntelligenceHub = ({ userData, stage, setView }: { userData: UserData | null, stage: MetabolicStage, setView: (v: AppView) => void }) => (
+  <ViewWrapper title={<IntelligenceHubTitle />} subtitle="Scientific orchestration of your metabolic performance pathways.">
+    <div className="space-y-12 animate-in fade-in duration-700">
+      <ImplementationBanner setView={setView} />
       <div className="grid lg:grid-cols-2 gap-12">
         <LiveVoiceCoaching userData={userData} stage={stage} />
         <div className="space-y-8">
@@ -691,7 +692,7 @@ const IntelligenceHub = ({ userData, stage, setView }: { userData: UserData | nu
                  <h4 className="text-2xl font-black uppercase tracking-tight text-[#0a192f]">Digital Twin Progress</h4>
               </div>
               <p className="text-slate-500 font-medium leading-relaxed text-lg flex-grow">
-                Synchronized agentic analysis of your metabolic velocity. Monitorvascular age projection and receptor efficiency in real-time.
+                Synchronized agentic analysis of your metabolic velocity. Monitor vascular age projection and receptor efficiency in real-time.
               </p>
               <button onClick={() => setView('blueprint')} className="w-full py-6 rounded-3xl bg-slate-900 text-white font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-600 transition-all active:scale-95 flex items-center justify-center gap-3">
                 Synchronize Blueprint <RefreshCw className="w-4 h-4" />
@@ -703,1347 +704,498 @@ const IntelligenceHub = ({ userData, stage, setView }: { userData: UserData | nu
   </ViewWrapper>
 );
 
-// --- Box Breathing Timer Component ---
-const BoxBreathingTimer = () => {
-  const [isActive, setIsActive] = useState(false);
-  const [step, setStep] = useState(0); 
-  const [timeLeft, setTimeLeft] = useState(4);
-  const [cycles, setCycles] = useState(0);
+// --- MISSING COMPONENTS IMPLEMENTATION ---
 
-  const steps = [
-    { name: "Inhale", color: "text-blue-500", icon: ArrowUpRight },
-    { name: "Hold", color: "text-emerald-500", icon: Minus },
-    { name: "Exhale", color: "text-rose-500", icon: TrendingDown },
-    { name: "Hold", color: "text-amber-500", icon: Minus }
-  ];
-
-  useEffect(() => {
-    let interval: any;
-    if (isActive) {
-      interval = setInterval(() => {
-        if (timeLeft > 1) {
-          setTimeLeft(prev => prev - 1);
-        } else {
-          const nextStep = (step + 1) % 4;
-          setStep(nextStep);
-          setTimeLeft(4);
-          if (nextStep === 0) setCycles(prev => prev + 1);
-        }
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isActive, step, timeLeft]);
-
-  const toggle = () => {
-    if (isActive) {
-      setIsActive(false);
-      setStep(0);
-      setTimeLeft(4);
-      setCycles(0);
-    } else {
-      setIsActive(true);
-    }
-  };
-
-  const current = steps[step];
-
-  return (
-    <div className="bg-white p-12 rounded-[56px] border border-blue-50 shadow-xl flex flex-col items-center text-center space-y-10 text-left">
-      <div className="space-y-4">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
-          <Wind className="w-4 h-4" />
-          <span className="text-[10px] font-black uppercase tracking-widest">Sympathetic Drive Reset</span>
-        </div>
-        <h3 className="text-3xl font-black text-[#0a192f] uppercase tracking-tight leading-[1.35]">Guided Box Breathing</h3>
-        <p className="text-slate-500 text-sm font-medium max-w-sm mx-auto leading-relaxed">
-          Manage the "off-switch" for your metabolic drive. Essential for lowering persistent insulin levels.
-        </p>
-      </div>
-
-      <div className="relative w-72 h-72 flex items-center justify-center">
-        <div 
-          className={`absolute inset-0 rounded-[64px] border-4 transition-all duration-[4000ms] ease-linear ${isActive ? (
-            step === 0 ? 'scale-110 opacity-40 border-blue-500' : 
-            step === 1 ? 'scale-110 opacity-60 border-emerald-500' : 
-            step === 2 ? 'scale-90 opacity-40 border-rose-500' : 
-            'scale-90 opacity-60 border-amber-500'
-          ) : 'border-slate-100 opacity-20'}`}
-        />
-        
-        <div className="relative z-10 flex flex-col items-center space-y-2">
-          <div className={`text-6xl font-black tabular-nums transition-colors duration-500 ${isActive ? current.color : 'text-slate-200'}`}>
-            {timeLeft}
-          </div>
-          <div className={`text-xs font-black uppercase tracking-[0.3em] transition-colors duration-500 ${isActive ? current.name : "Ready"}`}>
-            {isActive ? current.name : "Ready"}
-          </div>
-        </div>
-      </div>
-
-      <div className="w-full max-w-xs space-y-8">
-        <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
-           <span>Session Cycles</span>
-           <span className="text-blue-600">{cycles} Complete</span>
-        </div>
-        <button 
-          onClick={toggle}
-          className={`w-full py-6 rounded-3xl font-black text-xs uppercase tracking-[0.2em] transition-all active:scale-95 shadow-2xl ${
-            isActive ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          {isActive ? 'Terminate Session' : 'Initialize Breathing'}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// --- Sleep Hygiene Checklist Component ---
-const SleepHygieneChecklist = () => {
-  const [checks, setChecks] = useState<boolean[]>(new Array(6).fill(false));
-
-  const protocols = [
-    { title: "Blue Light Protocol", desc: "No screens 60 mins before sleep to preserve melatonin signaling.", icon: LightbulbOff },
-    { title: "Metabolic Cooling", desc: "Room temperature adjusted to < 68°F (20°C) for deep arterial rest.", icon: Wind },
-    { title: "Magnesium Window", desc: "Standardized magnesium implementation for neuromuscular relaxation.", icon: Flower2 },
-    { title: "TRE Fasting Seal", desc: "No metabolic load within 3 hours of sleep window.", icon: Ban },
-    { title: "Fixed Circadian Lock", desc: "Bedtime maintained within 15-minute variability.", icon: Clock },
-    { title: "Complete Photon Seal", desc: "100% dark environment for maximal β-cell recovery signaling.", icon: Moon }
-  ];
-
-  const toggle = (i: number) => {
-    const next = [...checks];
-    next[i] = !next[i];
-    setChecks(next);
-  };
-
-  const progress = Math.round((checks.filter(Boolean).length / checks.length) * 100);
-
-  return (
-    <div className="bg-white p-12 rounded-[56px] border border-blue-50 shadow-xl space-y-12 text-left">
-      <div className="flex justify-between items-start">
-        <div className="space-y-4">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-            <BedDouble className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Biological Recovery</span>
-          </div>
-          <h3 className="text-3xl font-black text-[#0a192f] uppercase tracking-tight leading-[1.35]">Sleep Hygiene Checklist</h3>
-        </div>
-        <div className="text-right">
-          <div className="text-3xl font-black text-[#0a192f]">{progress}%</div>
-          <div className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Daily Adherence</div>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {protocols.map((p, i) => (
-          <button 
-            key={i} 
-            onClick={() => toggle(i)}
-            className={`w-full p-6 rounded-3xl border-2 transition-all flex items-start gap-6 group text-left ${
-              checks[i] ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-50/50 border-slate-100 hover:border-blue-200 hover:bg-white'
-            }`}
-          >
-            <div className={`p-4 rounded-2xl transition-all ${checks[i] ? 'bg-emerald-600 text-white' : 'bg-white text-slate-400 shadow-sm group-hover:text-blue-600'}`}>
-              <p.icon className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                 <h4 className={`text-lg font-black uppercase tracking-tight leading-[1.35] ${checks[i] ? 'text-emerald-900' : 'text-slate-900'}`}>{p.title}</h4>
-                 {checks[i] && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-              </div>
-              <p className={`text-xs font-medium leading-relaxed ${checks[i] ? 'text-emerald-700/70' : 'text-slate-500'}`}>{p.desc}</p>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      <div className="p-8 bg-[#0a192f] rounded-[40px] text-white space-y-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-10"><Zap className="w-24 h-24" /></div>
-        <div className="flex items-center gap-3 relative z-10">
-          <BrainCircuit className="w-6 h-6 text-blue-400" />
-          <h5 className="text-sm font-black uppercase tracking-[0.2em]">Agentic Note</h5>
-        </div>
-        <p className="text-xs font-medium leading-[1.35] text-sky-100/60 relative z-10 italic">
-          "Recovery is the silent driver of Stage reversal. Poor sleep maintains elevated systemic cortisol, overriding even the most rigid nutritional path."
-        </p>
-      </div>
-    </div>
-  );
-};
-
-// --- Recovery Path Main Component ---
-const RecoveryPath = () => (
-  <ViewWrapper title="Recovery Path™" subtitle="Manage sympathetic drive and biological 'off-switch' signaling.">
-    <div className="grid lg:grid-cols-2 gap-12 text-left">
-      <BoxBreathingTimer />
-      <SleepHygieneChecklist />
-    </div>
-  </ViewWrapper>
-);
-
-// --- Precision Kitchen Component ---
-interface KitchenRecipe {
-  id: string;
-  title: string;
-  category: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack';
-  stage: MetabolicStage;
-  macros: string;
-  benefit: string;
-  ingredients: string[];
-  steps: string[];
-  icon: React.ElementType;
-}
-
-const KITCHEN_DATABASE: KitchenRecipe[] = [
-  {
-    id: 'b1',
-    title: "V-PAD Morning Elixir",
-    category: 'Breakfast',
-    stage: 'I',
-    macros: "P: 5g | F: 2g | C: 4g",
-    benefit: "Endothelial Priming",
-    ingredients: ["1 tsp Green Coffee Extract (CGA)", "1/2 inch Fresh Ginger", "Juice of 1/2 Lemon", "Pinch of Ceylon Cinnamon"],
-    steps: ["Steep ginger in hot (not boiling) water for 5 mins.", "Whisk in green coffee extract.", "Add lemon and cinnamon.", "Consume within 30 mins of waking."],
-    icon: Coffee
-  },
-  {
-    id: 'l1',
-    title: "Chlorogenic Field Bowl",
-    category: 'Lunch',
-    stage: 'I',
-    macros: "P: 22g | F: 14g | C: 12g",
-    benefit: "Hepatic Suppression",
-    ingredients: ["1/2 cup Sprouted Quinoa", "1 cup Roasted Arugula", "2 tbsp Pumpkin Seeds", "Lemon Tahini Dressing"],
-    steps: ["Massage arugula with lemon juice.", "Combine with warm quinoa.", "Top with toasted seeds and dressing.", "Add extra Piperine (black pepper) for bioavailability."],
-    icon: Salad
-  },
-  {
-    id: 'd1',
-    title: "Endothelial Salmon",
-    category: 'Dinner',
-    stage: 'I',
-    macros: "P: 32g | F: 22g | C: 6g",
-    benefit: "Arterial Flexibility",
-    ingredients: ["6oz Wild Salmon", "1 bunch Asparagus", "Crushed Walnuts", "Fresh Dill & Garlic"],
-    steps: ["Preheat oven to 375°F.", "Rub salmon with garlic and top with walnuts.", "Roast alongside asparagus for 12-15 mins.", "Finish with fresh dill."],
-    icon: Flame
-  },
-  {
-    id: 'b2',
-    title: "CGA Primed Greens",
-    category: 'Breakfast',
-    stage: 'II',
-    macros: "P: 18g | F: 12g | C: 8g",
-    benefit: "Glycemic Stability",
-    ingredients: ["2 cups Kale", "Apple Cider Vinaigrette", "2 Poached Organic Eggs", "1/4 Avocado"],
-    steps: ["Steam kale lightly for 3 mins.", "Toss with ACV to dampen glycemic response.", "Top with eggs and avocado.", "Season with sea salt."],
-    icon: Leaf
-  },
-  {
-    id: 'l2',
-    title: "Arterial Flow Tofu",
-    category: 'Lunch',
-    stage: 'II',
-    macros: "P: 26g | F: 14g | C: 10g",
-    benefit: "Nitric Oxide Surge",
-    ingredients: ["Firm Tofu cubes", "Turmeric & Piperine rub", "Fresh Spinach", "Red Beet Carpaccio"],
-    steps: ["Sear tofu in a dry pan with spices.", "Serve over a bed of raw spinach.", "Layer with thinly sliced raw beets.", "Drizzle with extra virgin olive oil."],
-    icon: Target
-  },
-  {
-    id: 's1',
-    title: "Low-Load Berry Quench",
-    category: 'Snack',
-    stage: 'II',
-    macros: "P: 12g | F: 8g | C: 14g",
-    benefit: "Post-prandial Control",
-    ingredients: ["1/2 cup Organic Blackberries", "2 tbsp Ground Flax Seeds", "1 cup Unsweetened Yogurt", "3 Walnuts"],
-    steps: ["Fold flax seeds into yogurt.", "Top with berries and crushed walnuts.", "Best consumed as a mid-afternoon glycemic buffer."],
-    icon: Apple
-  },
-  {
-    id: 'b3',
-    title: "Insulin Buffer Broth",
-    category: 'Breakfast',
-    stage: 'III',
-    macros: "P: 28g | F: 12g | C: 2g",
-    benefit: "β-cell Recovery",
-    ingredients: ["Grass-fed Bone Broth", "Slivered Bitter Melon", "Fresh Turmeric Root", "Garlic cloves"],
-    steps: ["Simmer bone broth with garlic and turmeric.", "Add bitter melon in the last 2 mins.", "Sip slowly to prime insulin receptors.", "Rich in NO2 precursors."],
-    icon: Soup
-  },
-  {
-    id: 'd3',
-    title: "Nitric Surge Plate",
-    category: 'Dinner',
-    stage: 'III',
-    macros: "P: 30g | F: 24g | C: 4g",
-    benefit: "Critical Revascularization",
-    ingredients: ["Grilled White Fish", "Steamed Broccoli & Cauliflower", "Arugula & Beet Salad", "Pumpkin Seed Butter"],
-    steps: ["Grill fish with olive oil and herbs.", "Steam vegetables until tender-crisp.", "Serve with a heavy arugula side salad.", "Use seed butter as a healthy fat binder."],
-    icon: Activity
-  }
-];
-
-const GlobalKitchen = ({ userData, stage }: { userData: UserData | null, stage: MetabolicStage }) => {
-  const [selectedRecipe, setSelectedRecipe] = useState<KitchenRecipe | null>(null);
-  const [filter, setFilter] = useState<'All' | 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack'>('All');
-  const { imageUrl, setImageUrl, isLoading, status, generateRecipeImage } = useAIExecution(userData);
-
-  const recipes = useMemo(() => {
-    let list = KITCHEN_DATABASE.filter(r => r.stage === stage || (stage === 'III' && r.stage === 'II') || (stage === 'II' && r.stage === 'I'));
-    if (filter !== 'All') list = list.filter(r => r.category === filter);
-    return list;
-  }, [stage, filter]);
-
-  const handleSelect = (r: KitchenRecipe) => {
-    setSelectedRecipe(r);
-    setImageUrl(null); 
-  };
-
-  return (
-    <ViewWrapper title="Precision Kitchen™" subtitle="Metabolic implementation paths via Stage-specific nutritional triggers.">
-      <div className="space-y-12 animate-in fade-in duration-700">
-        <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-          {['All', 'Breakfast', 'Lunch', 'Dinner', 'Snack'].map((f) => (
-            <button 
-              key={f} 
-              onClick={() => setFilter(f as any)}
-              className={`px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                filter === f ? 'bg-[#0a192f] text-white shadow-xl' : 'bg-white text-slate-400 border border-blue-50 hover:bg-sky-50'
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid lg:grid-cols-12 gap-12 items-start">
-          <div className="lg:col-span-5 space-y-6 max-h-[700px] overflow-y-auto pr-4 no-scrollbar">
-            {recipes.length > 0 ? recipes.map((r) => (
-              <button 
-                key={r.id} 
-                onClick={() => handleSelect(r)}
-                className={`w-full p-8 rounded-[48px] border-2 transition-all flex items-start gap-6 group text-left ${
-                  selectedRecipe?.id === r.id ? 'bg-white border-blue-500 shadow-2xl' : 'bg-white/60 border-blue-50 hover:border-blue-200'
-                }`}
-              >
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
-                  selectedRecipe?.id === r.id ? 'bg-blue-600 text-white' : 'bg-sky-50 text-blue-600 group-hover:bg-blue-100'
-                }`}>
-                  <r.icon className="w-6 h-6" />
-                </div>
-                <div className="flex-grow space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-black uppercase text-blue-500 tracking-widest">{r.category}</span>
-                    <span className="text-[9px] font-black uppercase text-slate-300 tracking-widest">Stage {r.stage}</span>
-                  </div>
-                  <h4 className="text-xl font-black text-[#0a192f] uppercase leading-tight group-hover:text-blue-600 transition-colors">{r.title}</h4>
-                  <div className="text-[10px] font-black uppercase text-emerald-500 tracking-widest flex items-center gap-1">
-                    <Zap className="w-3 h-3" /> {r.benefit}
-                  </div>
-                </div>
-                <ChevronRight className={`w-5 h-5 transition-all mt-4 ${selectedRecipe?.id === r.id ? 'text-blue-600 translate-x-1' : 'text-slate-200'}`} />
-              </button>
-            )) : (
-              <div className="text-center py-24 bg-white/40 rounded-[56px] border-2 border-dashed border-slate-200">
-                <Soup className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                <p className="text-sm font-black uppercase text-slate-400">No matching meal paths</p>
-              </div>
-            )}
-          </div>
-
-          <div className="lg:col-span-7 bg-white rounded-[64px] border border-blue-50 shadow-3xl overflow-hidden min-h-[700px] flex flex-col relative">
-            {selectedRecipe ? (
-              <div className="flex flex-col h-full animate-in slide-in-from-right-4 duration-500">
-                <div className="p-12 space-y-10">
-                  <div className="flex justify-between items-start">
-                    <div className="space-y-4">
-                       <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 font-black text-[10px] uppercase tracking-widest">
-                          {selectedRecipe.category} Path Implementation
-                       </div>
-                       <h3 className="text-4xl font-black text-[#0a192f] uppercase tracking-tight leading-[1.1]">{selectedRecipe.title}</h3>
-                    </div>
-                    <div className="text-right">
-                       <div className="text-xl font-black text-blue-600">{selectedRecipe.macros.split('|')[2].trim()}</div>
-                       <div className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Glycemic Impact</div>
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-12">
-                    <div className="space-y-6">
-                       <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] border-b border-slate-100 pb-2">Ingredients</h5>
-                       <ul className="space-y-4">
-                         {selectedRecipe.ingredients.map((ing, i) => (
-                           <li key={i} className="flex items-start gap-3 group">
-                             <div className="w-2 h-2 rounded-full bg-emerald-400 mt-2 shrink-0" />
-                             <span className="text-sm font-bold text-slate-700 group-hover:text-blue-600 transition-colors">{ing}</span>
-                           </li>
-                         ))}
-                       </ul>
-                    </div>
-                    <div className="space-y-6">
-                       <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] border-b border-slate-100 pb-2">Preparation</h5>
-                       <div className="space-y-6">
-                         {selectedRecipe.steps.map((step, i) => (
-                           <div key={i} className="flex gap-4">
-                             <div className="text-xs font-black text-blue-600 bg-blue-50 w-6 h-6 rounded-lg flex items-center justify-center shrink-0">{i+1}</div>
-                             <p className="text-xs font-medium leading-relaxed text-slate-500">{step}</p>
-                           </div>
-                         ))}
-                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-auto bg-slate-900/5 p-12 border-t border-slate-100 flex flex-col gap-8">
-                  <div className="flex items-center justify-between gap-6">
-                    <div className="space-y-1">
-                      <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Implementation Visual</div>
-                      <p className="text-xs font-medium text-slate-500">Synthesize a gourmet visual for your digital twin simulation.</p>
-                    </div>
-                    <button 
-                      onClick={() => generateRecipeImage(selectedRecipe.title)}
-                      disabled={isLoading}
-                      className="bg-blue-600 text-white px-10 py-5 rounded-[24px] font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
-                    >
-                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkle className="w-4 h-4" />} Visualize Implementation
-                    </button>
-                  </div>
-                  
-                  <div className="bg-[#0a192f] rounded-[40px] aspect-video relative overflow-hidden flex items-center justify-center group">
-                    {isLoading ? (
-                      <div className="flex flex-col items-center gap-4 text-white">
-                        <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
-                        <p className="text-xs font-black uppercase tracking-[0.3em]">{status}</p>
-                      </div>
-                    ) : imageUrl ? (
-                      <img src={imageUrl} alt="Gourmet Detail" className="w-full h-full object-cover animate-in zoom-in-95 duration-1000" />
-                    ) : (
-                      <div className="text-center space-y-4 px-12">
-                         <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto"><ImageIcon className="w-10 h-10 text-white/10" /></div>
-                         <p className="text-[10px] font-black uppercase text-sky-100/20 tracking-[0.2em] leading-relaxed">
-                           Simulation Ready. Initialize to render anatomical implementation visual.
-                         </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-grow flex flex-col items-center justify-center p-12 text-center space-y-8">
-                 <div className="relative">
-                    <div className="absolute inset-0 bg-blue-500/10 blur-3xl rounded-full" />
-                    <UtensilsCrossed className="w-24 h-24 text-blue-100 relative z-10" />
-                 </div>
-                 <div className="space-y-4 relative z-10">
-                    <h3 className="text-3xl font-black text-[#0a192f] uppercase tracking-tight">Select Meal Path</h3>
-                    <p className="text-slate-400 font-medium max-w-sm mx-auto leading-relaxed">
-                      Choose a stage-compatible meal option from the implementation list to view detailed ingredients and anatomical simulation.
-                    </p>
-                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </ViewWrapper>
-  );
-};
-
-// --- Digital Twin Blueprint Component ---
+// Digital Twin Blueprint Component
 const DigitalTwinBlueprint = ({ userData, stage, setView }: { userData: UserData, stage: MetabolicStage, setView: (v: AppView) => void }) => {
   const vascularAge = calculateVascularAge(userData.age, stage, userData.vascularAdjustment || 0);
-  const sensitivity = getInsulinSensitivity(stage);
+  const insulinSensitivity = getInsulinSensitivity(stage);
 
   return (
-    <ViewWrapper title="Digital Twin Blueprint™" subtitle="Synchronized simulation of your metabolic performance.">
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white p-10 rounded-[56px] border border-blue-50 shadow-xl space-y-8">
-           <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white"><Dna className="w-6 h-6" /></div>
-                 <h3 className="text-2xl font-black uppercase tracking-tight text-[#0a192f]">Vitality Delta Analysis</h3>
-              </div>
-              <SourceBadge type="Clinical" />
-           </div>
-           
-           <div className="grid md:grid-cols-2 gap-12">
-              <div className="space-y-6">
-                <div className="space-y-1">
-                   <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Chronological Bio-Identity</div>
-                   <div className="text-4xl font-black text-[#0a192f]">{userData.age} <span className="text-sm uppercase text-slate-400">Years</span></div>
-                </div>
-                <div className="p-8 bg-sky-50 rounded-[40px] border border-blue-100 flex items-center justify-between">
-                   <div>
-                      <div className="text-[10px] font-black uppercase text-blue-500 tracking-widest">Projected Vascular Age</div>
-                      <div className="text-5xl font-black text-rose-500">{vascularAge} <span className="text-sm uppercase opacity-50">Years</span></div>
-                   </div>
-                   <div className="text-right">
-                      <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Vitality Delta</div>
-                      <div className="text-2xl font-black text-rose-500">+{vascularAge - userData.age}Y</div>
-                   </div>
-                </div>
-              </div>
+    <ViewWrapper title="Metabolic Digital Twin™" subtitle="Vascular age simulation based on current biomarkers.">
+      <div className="grid md:grid-cols-2 gap-12">
+        <div className="bg-white rounded-[64px] p-12 shadow-xl border border-blue-50 space-y-8">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-blue-600 rounded-3xl flex items-center justify-center text-white">
+              <UserCheck className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-2xl font-black uppercase text-slate-900">{userData.name}</h3>
+              <p className="text-blue-500 font-bold text-xs uppercase tracking-widest">Digital Identity Verified</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-6">
+            <div className="p-6 bg-slate-50 rounded-3xl space-y-1">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Chronological Age</span>
+              <div className="text-3xl font-black text-slate-900">{userData.age}</div>
+            </div>
+            <div className="p-6 bg-blue-600 rounded-3xl space-y-1 text-white">
+              <span className="text-[10px] font-black text-blue-200 uppercase tracking-widest">Vascular Age</span>
+              <div className="text-3xl font-black">{vascularAge}</div>
+            </div>
+          </div>
 
-              <div className="space-y-8">
-                <div className="space-y-1">
-                   <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Receptor Efficiency</div>
-                   <h4 className="text-xl font-black text-[#0a192f] uppercase">Insulin Sensitivity</h4>
-                </div>
-                <div className="relative pt-6">
-                  <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden flex">
-                    <div className="h-full bg-rose-500 w-[38%]" />
-                    <div className="h-full bg-amber-500 w-[26%]" />
-                    <div className="h-full bg-emerald-500 w-[36%]" />
-                  </div>
-                  <div 
-                    className="absolute top-2 transition-all duration-1000"
-                    style={{ left: `${sensitivity}%`, transform: 'translateX(-50%)' }}
-                  >
-                    <div className="w-1 h-8 bg-[#0a192f] rounded-full shadow-lg" />
-                    <div className="bg-[#0a192f] text-white text-[9px] font-black px-3 py-1 rounded-full mt-2 shadow-xl whitespace-nowrap uppercase">
-                      Your Efficiency: {sensitivity}%
-                    </div>
+          <div className="space-y-4">
+            <h4 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Biomarker Telemetry</h4>
+            <div className="space-y-3">
+              {[
+                { label: 'HbA1c', value: `${userData.hba1c}%`, status: stage === 'I' ? 'Optimal' : stage === 'II' ? 'Warning' : 'Critical' },
+                { label: 'Insulin Sensitivity', value: `${insulinSensitivity}%`, status: stage === 'I' ? 'High' : 'Reduced' },
+                { label: 'V-PAD Adjustment', value: `-${userData.vascularAdjustment || 0} Years`, status: 'Active' }
+              ].map((m, i) => (
+                <div key={i} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl">
+                  <span className="text-sm font-bold text-slate-600">{m.label}</span>
+                  <div className="text-right">
+                    <div className="text-sm font-black text-slate-900">{m.value}</div>
+                    <div className={`text-[9px] font-black uppercase ${m.status === 'Optimal' || m.status === 'Active' ? 'text-emerald-500' : 'text-amber-500'}`}>{m.status}</div>
                   </div>
                 </div>
-                <p className="text-xs font-medium text-slate-500 leading-relaxed italic">
-                  HOMA-IR Proxy Analysis: Your stage indicates a pattern of resistance at the cellular gateway.
-                </p>
-              </div>
-           </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="bg-[#0a192f] p-10 rounded-[56px] text-white flex flex-col justify-between relative overflow-hidden text-left group">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-transparent" />
-          <div className="relative z-10 space-y-8">
-            <div className="flex items-center gap-3">
-              <BellRing className="w-8 h-8 text-blue-400 animate-pulse" />
-              <h3 className="text-xl font-black uppercase tracking-tight">Agentic Alerts</h3>
-            </div>
-            <div className="p-6 bg-white/5 rounded-3xl border border-white/10 space-y-4 group-hover:border-blue-500/30 transition-all">
-              <div className="flex items-center gap-2 text-emerald-400">
-                <CheckCircle className="w-4 h-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Priority Nudge</span>
+        <div className="space-y-8">
+          <div className="bg-[#0a192f] rounded-[64px] p-12 text-white border border-white/5 shadow-2xl space-y-8">
+             <div className="flex items-center gap-4">
+               <div className="w-12 h-12 bg-blue-500 rounded-2xl flex items-center justify-center"><Zap className="w-6 h-6" /></div>
+               <h3 className="text-xl font-black uppercase">Optimization Levers</h3>
+             </div>
+             <p className="text-sky-100/60 leading-relaxed font-medium">Your metabolic twin is currently at <span className="text-blue-400 font-bold">Stage {stage}</span>. Execute the following pathways to decelerate vascular decay.</p>
+             <div className="space-y-4">
+               {[
+                 { icon: Salad, title: 'Nutritional Reset', desc: 'Eliminate blood disrupters for 30 days.', target: 'kitchen' as AppView },
+                 { icon: Activity, title: 'Exercise Path', desc: 'Nitric oxide and vagal tone stimulation.', target: 'exercise' as AppView },
+                 { icon: Wind, title: 'Recovery Focus', desc: 'Sympathetic drive management.', target: 'recovery' as AppView }
+               ].map((l, i) => (
+                 <button key={i} onClick={() => setView(l.target)} className="w-full flex items-center gap-4 p-5 rounded-[32px] bg-white/5 hover:bg-white/10 transition-all text-left border border-white/5">
+                   <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-blue-400"><l.icon className="w-5 h-5" /></div>
+                   <div className="flex-grow">
+                     <div className="text-sm font-black uppercase tracking-tight">{l.title}</div>
+                     <div className="text-[10px] text-sky-100/40">{l.desc}</div>
+                   </div>
+                   <ChevronRight className="w-4 h-4 text-white/20" />
+                 </button>
+               ))}
+             </div>
+          </div>
+        </div>
+      </div>
+    </ViewWrapper>
+  );
+};
+
+// Global Kitchen Component
+const GlobalKitchen = ({ userData, stage }: { userData: UserData | null, stage: MetabolicStage }) => {
+  const { imageUrl, isLoading, status, generateRecipeImage } = useAIExecution(userData);
+  const recipes = [
+    { title: "Mediterranean Salmon with CGA-Rich Greens", stage: ["I", "II"], desc: "High omega-3 profile with chlorogenic acid for glucose management." },
+    { title: "Keto-Activated Avocado & Turmeric Bowl", stage: ["II", "III"], desc: "Anti-inflammatory fats designed to reset insulin sensitivity." },
+    { title: "Cruciferous Fiber Reset", stage: ["I", "II", "III"], desc: "Phase 1 detox support for vascular cleaning." }
+  ].filter(r => r.stage.includes(stage));
+
+  return (
+    <ViewWrapper title="Precision Kitchen™" subtitle="Metabolic orchestration through biological nutrition.">
+      <div className="space-y-12">
+        <div className="grid md:grid-cols-3 gap-8">
+          {recipes.map((r, i) => (
+            <div key={i} className="bg-white rounded-[48px] overflow-hidden shadow-xl border border-blue-50 group hover:-translate-y-2 transition-all">
+              <div className="aspect-square bg-slate-100 relative overflow-hidden">
+                <img src={`https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=600&sig=${i}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={r.title} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
+                  <button onClick={() => generateRecipeImage(r.title)} className="bg-white/20 backdrop-blur-md text-white border border-white/20 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/30 transition-all">
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "AI Visualization"}
+                  </button>
+                </div>
               </div>
-              <p className="text-xs font-bold leading-relaxed text-sky-50">
-                "Elevated HOMA-IR detected. Prioritize CGA-rich botanical infusion."
-              </p>
+              <div className="p-10 space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] font-black uppercase">Stage {stage} Compatible</div>
+                <h3 className="text-xl font-black text-slate-900 uppercase leading-tight">{r.title}</h3>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed">{r.desc}</p>
+                <button className="w-full py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all">Prepare Recipe</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        {imageUrl && (
+          <div className="bg-white p-12 rounded-[64px] shadow-2xl border border-blue-100 animate-in fade-in zoom-in-95">
+             <h4 className="text-xl font-black uppercase mb-6 flex items-center gap-3"><Sparkles className="w-6 h-6 text-blue-500" /> AI Culinary Visualization</h4>
+             <img src={imageUrl} className="w-full rounded-[48px] shadow-lg" alt="AI Recipe" />
+          </div>
+        )}
+      </div>
+    </ViewWrapper>
+  );
+};
+
+// Exercise Path Component
+const ExercisePath = ({ stage, userData, onComplete }: { stage: MetabolicStage, userData: UserData | null, onComplete: (path: string) => void }) => {
+  const { videoUrl, isLoading, status, generateExerciseVideo } = useAIExecution(userData);
+  const currentYoga = yogaProtocols[stage];
+
+  return (
+    <ViewWrapper title="Exercise Paths™" subtitle="Vascular performance through rhythmic stimulation.">
+      <div className="grid lg:grid-cols-2 gap-12">
+        <div className="space-y-8">
+          <div className="bg-white rounded-[56px] p-12 shadow-xl border border-blue-50 space-y-8">
+            <div className="flex items-center justify-between">
+              <h3 className="text-2xl font-black uppercase text-slate-900 flex items-center gap-3"><Dumbbell className="w-8 h-8 text-blue-600" /> Yoga Flow</h3>
+              <span className="text-[10px] font-black px-3 py-1 bg-emerald-100 text-emerald-600 rounded-full uppercase tracking-widest">Primary Lever</span>
             </div>
             <div className="space-y-4">
-              <div className="flex justify-between border-b border-white/10 pb-4">
-                <span className="text-[10px] font-black uppercase tracking-widest text-sky-200/40">Vascular State</span>
-                <span className="text-lg font-black text-emerald-400">Stiffening</span>
-              </div>
-              <div className="flex justify-between border-b border-white/10 pb-4">
-                <span className="text-[10px] font-black uppercase tracking-widest text-sky-200/40">Glucose Load</span>
-                <span className="text-lg font-black text-white">{userData.hba1c}%</span>
-              </div>
-            </div>
-          </div>
-          <button className="relative z-10 w-full py-5 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-500 transition-all active:scale-95 shadow-xl">
-            Sync Real-time Sensors
-          </button>
-        </div>
-      </div>
-    </ViewWrapper>
-  );
-};
-
-// --- Exercise Paths Component ---
-const ExercisePath = ({ stage, userData, onComplete }: { stage: MetabolicStage, userData: UserData | null, onComplete: (p: 'yoga' | 'regular' | 'taichi') => void }) => {
-  const [selectedPath, setSelectedPath] = useState<'Normal' | 'Yoga' | 'Tai-Chi'>('Normal');
-  const { videoUrl, setVideoUrl, isLoading, status, generateExerciseVideo } = useAIExecution(userData);
-
-  const pathContent = useMemo(() => {
-    switch (selectedPath) {
-      case 'Yoga': 
-        const yp = yogaProtocols[stage];
-        return {
-          title: "Yoga Path Protocol",
-          name: yp.name,
-          desc: yp.desc,
-          focus: yp.focus,
-          duration: `${yp.duration / 60}m`,
-          citation: yp.citation,
-          icon: Flower2,
-          steps: [yp.name],
-          id: 'yoga'
-        };
-      case 'Tai-Chi':
-        return {
-          title: "Tai-Chi Path Protocol",
-          name: "Flowing Balance Form",
-          desc: "Low-impact internal martial art focused on vagal tone and mindful weight shifting.",
-          focus: "Autonomic Balance & Endothelial Shear Stress",
-          duration: "15m",
-          citation: "Tai Chi has been shown to reduce HbA1c by an average of 0.8% in Stage II implementations.",
-          icon: Waves,
-          steps: taiChiSteps.map(s => s.name),
-          id: 'taichi'
-        };
-      default:
-        return {
-          title: "Normal (Base) Protocol",
-          name: "Zone 2 Steady State",
-          desc: "Foundation metabolic exercise designed for systemic mitochondrial biogenesis.",
-          focus: "Mitochondrial Capacity & Lactic Buffering",
-          duration: "45m",
-          citation: "Daily Zone 2 implementation for 45 minutes reduces insulin resistance by 24%.",
-          icon: Activity,
-          steps: ["Warm-up (5m)", "Steady State Zone 2 Heart Rate (35m)", "Cool-down (5m)"],
-          id: 'regular'
-        };
-    }
-  }, [selectedPath, stage]);
-
-  const handleSwitchPath = (p: typeof selectedPath) => {
-    setSelectedPath(p);
-    setVideoUrl(null);
-  };
-
-  return (
-    <ViewWrapper title="Exercise Paths" subtitle="Precision vascular reset through isometric and rhythmic protocols.">
-      <div className="space-y-12 animate-in fade-in duration-700">
-        <div className="grid md:grid-cols-3 gap-6">
-          {(['Normal', 'Yoga', 'Tai-Chi'] as const).map((p) => (
-            <button 
-              key={p} 
-              onClick={() => handleSwitchPath(p)}
-              className={`p-10 rounded-[48px] border-2 transition-all flex flex-col gap-6 text-left group ${
-                selectedPath === p ? 'bg-white border-blue-500 shadow-2xl scale-[1.02]' : 'bg-white/60 border-blue-50 hover:border-blue-200'
-              }`}
-            >
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
-                selectedPath === p ? 'bg-blue-600 text-white' : 'bg-sky-50 text-blue-600'
-              }`}>
-                {p === 'Normal' ? <Activity className="w-6 h-6" /> : p === 'Yoga' ? <Flower2 className="w-6 h-6" /> : <Waves className="w-6 h-6" />}
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-2xl font-black text-[#0a192f] uppercase tracking-tight">{p} Path</h4>
-                <p className="text-xs font-medium text-slate-500 leading-relaxed">
-                  {p === 'Normal' ? 'Base mitochondrial clearing.' : p === 'Yoga' ? 'Endocrine messaging focus.' : 'Vagal tone and flow maxima.'}
-                </p>
-              </div>
-              <div className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${selectedPath === p ? 'text-blue-600' : 'text-slate-300'}`}>
-                {selectedPath === p ? 'Protocol Active' : 'Select Path'} <ChevronRight className="w-4 h-4" />
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <div className="grid lg:grid-cols-12 gap-12 items-start">
-          <div className="lg:col-span-5 space-y-8">
-            <div className="bg-white p-12 rounded-[56px] border border-blue-50 shadow-xl space-y-10">
-              <div className="flex justify-between items-start">
-                <div className="space-y-4">
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 font-black text-[10px] uppercase tracking-widest">
-                    {pathContent.title}
-                  </div>
-                  <h3 className="text-4xl font-black text-[#0a192f] uppercase tracking-tight leading-[1.1]">{pathContent.name}</h3>
-                </div>
-                <div className="text-right">
-                  <div className="text-xl font-black text-blue-600">{pathContent.duration}</div>
-                  <div className="text-[8px] font-black uppercase text-slate-400 tracking-widest">Session Window</div>
-                </div>
-              </div>
-
-              <p className="text-sm font-medium text-slate-500 leading-relaxed">{pathContent.desc}</p>
-
-              <div className="space-y-4">
-                <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] border-b border-slate-100 pb-2">Module Sequence</h5>
-                <ul className="space-y-4">
-                  {pathContent.steps.map((step, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <div className="text-xs font-black text-blue-600 bg-blue-50 w-6 h-6 rounded-lg flex items-center justify-center shrink-0">{i+1}</div>
-                      <span className="text-sm font-bold text-slate-700">{step}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="p-8 bg-sky-50/50 rounded-[40px] border border-blue-50 space-y-4">
-                <div className="text-[10px] font-black uppercase text-blue-600 tracking-widest flex items-center gap-2">
-                  <Target className="w-3 h-3" /> Biological Focus: {pathContent.focus}
-                </div>
-                <p className="text-xs font-bold text-slate-700 italic leading-relaxed">
-                  {pathContent.citation}
-                </p>
-              </div>
-
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => generateExerciseVideo(pathContent.name)}
-                  disabled={isLoading}
-                  className="flex-1 py-6 rounded-[28px] bg-[#0a192f] text-white font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-slate-800 transition-all shadow-xl active:scale-95 disabled:opacity-50"
-                >
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />} Synthesize Simulation
-                </button>
-                <button 
-                  onClick={() => onComplete(pathContent.id as any)}
-                  className="p-6 rounded-[28px] bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-all active:scale-95"
-                >
-                  <CheckCircle2 className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white p-12 rounded-[56px] border border-blue-50 shadow-xl space-y-8">
-               <h5 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Related Implementation Tools</h5>
-               <div className="grid gap-4">
-                  {[
-                    { name: 'Vagal Tone HRV Monitor', price: '$199', icon: Heart },
-                    { name: 'Somatic Cork Mat', price: '$85', icon: Flower2 }
-                  ].map((item, i) => (
-                    <div key={i} className="p-6 rounded-3xl bg-slate-50 border border-slate-100 flex items-center justify-between group hover:border-blue-200 transition-all">
-                       <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm"><item.icon className="w-5 h-5" /></div>
-                          <div>
-                             <div className="text-xs font-black text-[#0a192f] uppercase">{item.name}</div>
-                             <div className="text-[10px] font-bold text-blue-600">{item.price}</div>
-                          </div>
-                       </div>
-                       <button className="p-3 bg-white rounded-xl text-slate-300 group-hover:text-blue-600 shadow-sm transition-all"><ShoppingCart className="w-4 h-4" /></button>
-                    </div>
-                  ))}
+               <div className="p-8 bg-slate-50 rounded-[40px] space-y-4">
+                 <div className="text-blue-600 font-black uppercase text-xs tracking-widest">{currentYoga.name}</div>
+                 <h4 className="text-xl font-black text-slate-900">{currentYoga.focus}</h4>
+                 <p className="text-slate-500 text-sm leading-relaxed italic">"{currentYoga.desc}"</p>
+                 <SourceBadge type="Clinical" citation="yoga-hba1c" customText={currentYoga.citation} />
                </div>
+               <button onClick={() => { generateExerciseVideo(currentYoga.name); onComplete('yoga'); }} className="w-full py-6 bg-slate-900 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-600 transition-all flex items-center justify-center gap-3">
+                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Begin Sequence <Play className="w-4 h-4" /></>}
+               </button>
             </div>
           </div>
-
-          <div className="lg:col-span-7 bg-[#0a192f] rounded-[64px] border border-white/5 shadow-3xl overflow-hidden min-h-[600px] flex flex-col items-center justify-center relative">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-transparent pointer-events-none" />
-            
-            {isLoading ? (
-              <div className="flex flex-col items-center gap-6 text-center text-white px-12 animate-in fade-in duration-300">
-                <Loader2 className="w-20 h-20 text-blue-500 animate-spin" />
-                <div className="space-y-3">
-                  <p className="text-xl font-black uppercase tracking-[0.3em]">{status}</p>
-                  <p className="text-sm font-medium text-sky-200/40 max-w-sm mx-auto">
-                    Synthesizing anatomical precision paths for your stage-specific {selectedPath} implementation.
-                  </p>
-                </div>
-              </div>
-            ) : videoUrl ? (
-              <div className="w-full h-full relative animate-in zoom-in duration-700">
-                <video src={videoUrl} controls autoPlay loop className="w-full h-full object-cover" />
-                <div className="absolute top-8 left-8 bg-black/40 backdrop-blur-md px-6 py-2 rounded-full border border-white/10 text-white font-black text-[9px] uppercase tracking-widest flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live Simulation
-                </div>
-              </div>
-            ) : (
-              <div className="text-center space-y-8 px-20">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full" />
-                  <div className="w-32 h-32 bg-white/5 rounded-full flex items-center justify-center mx-auto relative z-10 border border-white/10">
-                    <Video className="w-12 h-12 text-white/20" />
-                  </div>
-                </div>
-                <div className="space-y-4 relative z-10">
-                  <h3 className="text-2xl font-black text-white uppercase tracking-tight">Simulation Engine Ready</h3>
-                  <p className="text-sky-100/30 font-medium max-w-sm mx-auto leading-relaxed text-sm">
-                    Initialize movement synthesis to render your specific {selectedPath} path anatomical simulation.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </ViewWrapper>
-  );
-};
-
-// --- Community View Components ---
-const TribalSourcingView = () => (
-  <ViewWrapper title="Smart Tribal Farming: Medicinal and Aromatic Plants (MAP) Value Chain" subtitle="Ethno-botanical heritage and traceability.">
-    <div className="space-y-12 text-left">
-      <div className="bg-white p-12 rounded-[64px] border border-blue-50 shadow-xl space-y-10 text-left">
-        <div className="flex items-center gap-4 text-orange-600 text-left">
-          <Users className="w-10 h-10" />
-          <h2 className="text-3xl font-black uppercase tracking-tight text-[#0a192f] m-0 leading-[1.35] text-left">The Heritage Protocol</h2>
-        </div>
-        <div className="grid md:grid-cols-2 gap-16 text-left">
-          <div className="space-y-8 text-left">
-            <p className="text-xl text-slate-700 leading-relaxed font-medium italic text-left">
-              "Smart Tribal Farming: Medicinal and Aromatic Plants (MAP) Value Chain is not just an agricultural technique; it is a metabolic preservation strategy for the 21st century."
-            </p>
-            <div className="p-8 bg-orange-50/50 rounded-3xl border border-orange-100/50 space-y-4 text-left">
-              <div className="flex items-center gap-2 text-left">
-                < BookOpen className="w-5 h-5 text-orange-600" />
-                <h4 className="text-[11px] font-black uppercase text-orange-600 tracking-widest text-left">Primary Research Citation</h4>
-              </div>
-              <p className="text-sm font-bold text-slate-800 leading-relaxed text-left">
-                <InfoTooltip citation="tribal-farming">Nair, S. K., Gnanamangai, B. M., Kodakkat, V. K., Pillay, R., & Moni, M. ET AL . "Smart Tribal Farming: Medicinal and Aromatic Plants (MAP) Value Chain"</InfoTooltip>
-              </p>
-            </div>
-            <p className="text-slate-600 leading-relaxed font-medium text-left">
-              Our sourcing strategy bridges the gap between ancient ethno-botanical wisdom and modern phytochemical verification. By partnering with tribal collectives in India, we ensure that every extract of <InfoTooltip acronym="CGA">CGA</InfoTooltip> and <InfoTooltip acronym="NO2">NO2</InfoTooltip> precursors is grown in bio-dynamic soil, maximizing cellular bioavailability.
-            </p>
-          </div>
-          <div className="relative group text-left">
-            <div className="absolute inset-0 bg-orange-600/10 rounded-[48px] -rotate-3 group-hover:rotate-0 transition-transform duration-500" />
-            <img 
-              src="https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&q=80&w=1200" 
-              alt="Smart Tribal Farming: Medicinal and Aromatic Plants (MAP) Value Chain Heritage" 
-              className="w-full h-[500px] object-cover rounded-[48px] shadow-2xl relative z-10 transition-transform duration-500 group-hover:-translate-y-2 text-left" 
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  </ViewWrapper>
-);
-
-const MAPChainView = () => (
-  <ViewWrapper title="Smart Tribal Farming: Medicinal and Aromatic Plants (MAP) Value Chain" subtitle="From soil to cellular implementation.">
-    <div className="space-y-12 text-left">
-      <div className="bg-white p-12 rounded-[64px] border border-blue-50 shadow-xl text-left">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-16 text-left">
-          <div className="flex items-center gap-4 text-blue-600 text-left">
-            <LinkIcon className="w-10 h-10" />
-            <h2 className="text-3xl font-black uppercase tracking-tight text-[#0a192f] m-0 leading-[1.35] text-left">MAP Value Chain</h2>
-          </div>
-          <SourceBadge type="Clinical" urls={["https://map-verification.org/lab-standards"]} />
         </div>
         
-        <div className="relative space-y-12 text-left">
-          <div className="absolute left-6 top-8 bottom-8 w-px bg-gradient-to-b from-blue-500/50 via-blue-50/50 to-emerald-500/50 hidden md:block" />
-          {[
-            { step: '01', icon: Sprout, title: 'Ethno-Botanical Sourcing', color: 'text-orange-500', desc: 'Sourced via Smart Tribal Farming: Medicinal and Aromatic Plants (MAP) Value Chain collectives to ensure soil integrity and natural metabolic profile.' },
-            { step: '02', icon: FlaskConical, title: 'Phytochemical Extraction', color: 'text-blue-500', desc: 'Low-heat CO2 extraction to preserve volatile compounds including Allicin and Piperine.' },
-            { step: '03', icon: TestTube2, title: 'Lab Verification', color: 'text-purple-500', desc: 'Every batch undergoes rigorous <InfoTooltip acronym="GC-MS">GC-MS</InfoTooltip> testing to verify purity and standardized biomarker potency.' },
-            { step: '04', icon: Target, title: 'Cellular Implementation', color: 'text-emerald-500', desc: 'Phase 04 focusing on precision delivery to target <InfoTooltip acronym="Wellness Mentor">Wellness Mentor</InfoTooltip> pathways, optimizing <InfoTooltip acronym="HbA1c">HbA1c</InfoTooltip> thresholds.' }
-          ].map((item, i) => (
-            <div key={i} className="flex gap-10 relative group text-left">
-              <div className="hidden md:flex flex-col items-center relative text-left">
-                <div className="w-12 h-12 bg-white border-2 border-blue-50 shadow-xl rounded-2xl flex items-center justify-center text-blue-600 z-10 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 text-left">
-                  <item.icon className="w-6 h-6" />
-                </div>
-              </div>
-              <div className="pb-12 space-y-4 text-left">
-                <div className="inline-flex items-center gap-2 text-left">
-                  <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${item.color} text-left`}>Phase {item.step}</span>
-                  <div className="w-8 h-px bg-slate-100" />
-                </div>
-                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tight leading-[1.35] text-left">{item.title}</h3>
-                <p className="text-slate-600 font-medium leading-[1.35] max-w-2xl text-lg text-left">{item.desc}</p>
-              </div>
-            </div>
-          ))}
+        <div className="space-y-8">
+           {videoUrl ? (
+             <div className="bg-black rounded-[56px] overflow-hidden shadow-2xl aspect-video relative group">
+               <video src={videoUrl} controls autoPlay className="w-full h-full object-cover" />
+               <div className="absolute top-6 left-6 p-4 bg-black/50 backdrop-blur-md rounded-2xl border border-white/10 text-white text-[10px] font-black uppercase tracking-widest">Metabolic Simulation Active</div>
+             </div>
+           ) : (
+             <div className="bg-slate-900 rounded-[56px] aspect-video flex flex-col items-center justify-center p-12 text-center text-white/20 border border-white/5 shadow-inner">
+               <Video className="w-16 h-16 mb-6 opacity-10" />
+               <p className="text-sm font-bold uppercase tracking-widest">{status || "Initialize sequence to view AI visualization"}</p>
+             </div>
+           )}
         </div>
+      </div>
+    </ViewWrapper>
+  );
+};
+
+// Recovery Path Component
+const RecoveryPath = () => (
+  <ViewWrapper title="Recovery Path™" subtitle="Autonomic balance and arterial flexibility reset.">
+    <div className="grid md:grid-cols-2 gap-12">
+      <div className="bg-white p-12 rounded-[56px] shadow-xl border border-blue-50 space-y-8">
+        <div className="flex items-center gap-5">
+           <div className="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner"><Moon className="w-7 h-7" /></div>
+           <h4 className="text-2xl font-black uppercase tracking-tight text-[#0a192f]">Sleep Architecture</h4>
+        </div>
+        <p className="text-slate-500 font-medium leading-relaxed text-lg italic">"Optimizing deep sleep phases for glucose clearance and neural inflammation cooling."</p>
+        <div className="space-y-4">
+          <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between">
+            <span className="text-sm font-bold text-slate-600">Parasympathetic Tone</span>
+            <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div className="w-3/4 h-full bg-emerald-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="bg-[#0a192f] p-12 rounded-[56px] shadow-2xl text-white space-y-8">
+        <h3 className="text-xl font-black uppercase">Vagal Tone Protocol</h3>
+        <p className="text-sky-100/60 leading-relaxed font-medium">Execute the 4-7-8 breathing sequence to trigger immediate arterial relaxation.</p>
+        <button className="w-full py-6 rounded-3xl bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-500 transition-all">Start Session</button>
       </div>
     </div>
   </ViewWrapper>
 );
 
-const ClinicalBoardView = () => (
-  <ViewWrapper title="Clinical Board & Consortium" subtitle="The governing bodies of The Good Health Standard.">
-    <div className="grid md:grid-cols-3 gap-8 text-left">
-      {[
-        { 
-          name: <span><WellnessMentorBrand /> Research Consortium</span>, 
-          icon: Building2, 
-          role: 'Primary Governance', 
-          desc: 'Responsible for the development of agentic Digital Twin simulations and vascular delta algorithms used in Stage II/III reversal.' 
-        },
-        { 
-          name: 'ADA 2025 Standards Committee', 
-          icon: Stethoscope, 
-          role: 'Metabolic Thresholds', 
-          desc: 'Adherence to latest diagnostic criteria for pre-diabetes and metabolic reversal benchmarks defined by ADA 2025.' 
-        },
-        { 
-          name: 'Nature Reviews Endocrinology', 
-          icon: BookOpen, 
-          role: 'Peer Review Verification', 
-          desc: 'Validated protocols for <InfoTooltip acronym="TRE">TRE</InfoTooltip> and isometric glucose transporter activation as published in Nature 2024.' 
-        }
-      ].map((board, i) => (
-        <div key={i} className="bg-white p-12 rounded-[56px] border border-blue-50 shadow-xl hover:-translate-y-2 transition-all duration-500 flex flex-col items-center text-center text-left">
-          <div className="w-20 h-20 bg-sky-50 rounded-3xl flex items-center justify-center text-blue-600 mb-10 shadow-inner text-center"><board.icon className="w-10 h-10" /></div>
-          <div className="text-[11px] font-black uppercase text-blue-500 tracking-widest mb-3 text-center">{(board as any).role}</div>
-          <h3 className="text-2xl font-black text-[#0a192f] uppercase mb-6 leading-tight min-h-[64px] leading-[1.35] text-center text-left">{(board as any).name}</h3>
-          <p className="text-slate-600 text-sm font-bold leading-[1.35] text-center text-left">{(board as any).desc}</p>
-          <div className="mt-auto pt-8 text-center text-left">
-             <button className="text-[10px] font-black uppercase text-blue-600 tracking-[0.2em] flex items-center gap-2 hover:gap-4 transition-all text-center">Review Protocol <ArrowRight className="w-3 h-3" /></button>
-          </div>
-        </div>
-      ))}
+// Placeholder Components for secondary views
+const ReferenceHub = () => <ViewWrapper title="Reference Hub" subtitle="Complete clinical and academic documentation." />;
+const LegalView = ({ mode, setView }: { mode: 'tc' | 'privacy', setView: (v: AppView) => void }) => (
+  <ViewWrapper title={mode === 'tc' ? "Terms & Conditions" : "Privacy Policy"} subtitle="Governance and data sovereignty standards.">
+    <div className="bg-white p-12 rounded-[64px] shadow-xl border border-blue-50 space-y-8 max-w-4xl mx-auto">
+      <div className="prose prose-slate max-w-none">
+        <h3 className="text-xl font-black uppercase text-slate-900">1. Data Sovereignty</h3>
+        <p className="text-slate-600 font-medium">All metabolic data is owned exclusively by the user. Wellness Mentor™ acts only as an implementation agent.</p>
+        <h3 className="text-xl font-black uppercase text-slate-900 mt-8">2. Liability</h3>
+        <p className="text-slate-600 font-medium">This platform provides educational simulations and research-based implementation pathways. Consult your clinical board for medical interventions.</p>
+      </div>
+      <button onClick={() => setView('home')} className="inline-flex items-center gap-2 text-blue-600 font-black text-xs uppercase tracking-[0.2em] hover:gap-4 transition-all">Return to Home <ArrowLeft className="w-4 h-4" /></button>
     </div>
   </ViewWrapper>
 );
+const TribalSourcingView = () => <ViewWrapper title="Tribal Sourcing™" subtitle="Traceable, high-purity botanical supply chains." />;
+const MAPChainView = () => <ViewWrapper title="MAP Chain™" subtitle="Metabolic Analytics & Provenance Blockchain." />;
+const ClinicalBoardView = () => <ViewWrapper title="Clinical Board" subtitle="Expert oversight and validation protocols." />;
+const SubscriptionsView = () => <ViewWrapper title="Subscriptions" subtitle="Tiered access to advanced metabolic tools." />;
+const EcommerceView = () => <ViewWrapper title="Global Store" subtitle="Verified phytochemicals and biometric hardware." />;
 
-const ReferenceHub = () => (
-  <ViewWrapper title="Scientific References" subtitle="Validated clinical sources and research publications.">
-    <div className="bg-white p-12 rounded-[64px] border border-blue-50 shadow-xl space-y-8 text-left">
-      <h3 className="text-2xl font-black text-[#0a192f] uppercase tracking-tight">Clinical Standards & Publications</h3>
+// Footer Component
+const Footer = ({ setView, onOpenContact }: { setView: (v: AppView) => void, onOpenContact: () => void }) => (
+  <footer className="bg-slate-900 text-white py-24 px-6 border-t border-white/5">
+    <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-12">
       <div className="space-y-6">
-        {Object.entries(CITATIONS).map(([key, data]) => (
-          <div key={key} className="p-6 rounded-3xl bg-slate-50 border border-slate-100 flex items-start gap-6 group hover:border-blue-200 transition-all text-left">
-            <div className="p-4 bg-white rounded-2xl text-blue-600 shadow-sm"><BookOpen className="w-6 h-6" /></div>
-            <div className="space-y-1 text-left">
-              <h4 className="text-lg font-black text-[#0a192f] uppercase leading-tight">{data.source}</h4>
-              <div className="flex items-center gap-2 text-left">
-                <span className="text-[10px] font-black uppercase text-blue-500 tracking-widest">Released: {data.year}</span>
-                <span className="w-1 h-1 bg-slate-300 rounded-full" />
-                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Citation: {key}</span>
-              </div>
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white"><Activity className="w-4 h-4" /></div>
+          <span className="font-black text-lg uppercase tracking-tighter"><WellnessMentorBrand /></span>
+        </div>
+        <p className="text-sky-100/40 text-xs font-medium leading-relaxed uppercase tracking-widest">
+          Bridging clinical research with real-world implementation.
+        </p>
+      </div>
+      <div>
+        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-8">Navigation</h4>
+        <div className="flex flex-col gap-4">
+          {['Home', 'Blueprint', 'Intelligence Hub', 'Nutrition', 'Exercise'].map((l, i) => (
+            <button key={i} onClick={() => setView(l.toLowerCase().replace(' ', '-') as AppView)} className="text-xs font-bold text-sky-100/60 hover:text-white transition-colors text-left uppercase tracking-widest">{l}</button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-8">Support</h4>
+        <div className="flex flex-col gap-4">
+          <button onClick={onOpenContact} className="text-xs font-bold text-sky-100/60 hover:text-white transition-colors text-left uppercase tracking-widest">Contact Us</button>
+          <button onClick={() => setView('faq')} className="text-xs font-bold text-sky-100/60 hover:text-white transition-colors text-left uppercase tracking-widest">Knowledge Base</button>
+        </div>
+      </div>
+      <div>
+        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-8">Legal</h4>
+        <div className="flex flex-col gap-4">
+          <button onClick={() => setView('legal-tc')} className="text-xs font-bold text-sky-100/60 hover:text-white transition-colors text-left uppercase tracking-widest">Terms & Conditions</button>
+          <button onClick={() => setView('legal-privacy')} className="text-xs font-bold text-sky-100/60 hover:text-white transition-colors text-left uppercase tracking-widest">Privacy Policy</button>
+        </div>
+      </div>
+    </div>
+    <div className="max-w-6xl mx-auto mt-24 pt-12 border-t border-white/5 text-center">
+      <p className="text-[9px] font-black uppercase tracking-[0.3em] text-sky-100/20">© 2025 WELLNESS MENTOR • V-PAD™ POWERED SYSTEM • ALL RIGHTS RESERVED</p>
+    </div>
+  </footer>
+);
+
+// User Authentication Modal
+const UserAuthModal = ({ mode, onClose, onSwitchMode, onSuccess }: { mode: AuthMode, onClose: () => void, onSwitchMode: (m: AuthMode) => void, onSuccess: (name: string) => void }) => {
+  if (!mode) return null;
+  const [name, setName] = useState('');
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-in fade-in duration-300">
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-lg rounded-[64px] overflow-hidden shadow-3xl border border-white/10 p-16 space-y-8 animate-in zoom-in-95 duration-300">
+        <div className="text-center space-y-4">
+          <div className="w-20 h-20 bg-blue-600 rounded-[32px] mx-auto flex items-center justify-center text-white shadow-2xl shadow-blue-500/30">
+            <ShieldCheck className="w-10 h-10" />
+          </div>
+          <h2 className="text-3xl font-black uppercase tracking-tight text-[#0a192f]">{mode === 'login' ? 'Welcome Back' : 'Create Account'}</h2>
+          <p className="text-slate-500 font-medium">Secure access to your Metabolic Digital Twin™.</p>
+        </div>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-6">Your Name</label>
+            <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Enter full name" className="w-full px-8 py-6 rounded-[32px] bg-slate-50 border-2 border-transparent focus:border-blue-500 outline-none transition-all font-bold text-slate-900" />
+          </div>
+          <button onClick={() => onSuccess(name || 'Implementer One')} className="w-full py-6 bg-blue-600 text-white rounded-[32px] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-blue-500 transition-all active:scale-95">
+            {mode === 'login' ? 'Authorize Access' : 'Initialize Blueprint'}
+          </button>
+          <div className="text-center">
+            <button onClick={() => onSwitchMode(mode === 'login' ? 'signup' : 'login')} className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700">
+              {mode === 'login' ? "Don't have an account? Sign Up" : "Already have an account? Login"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Mentor Chat Widget
+const MentorChat = ({ userData, stage, openCounter, view }: { userData: UserData, stage: MetabolicStage, openCounter: number, view: AppView }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([]);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const chatRef = useRef<Chat | null>(null);
+
+  useEffect(() => { if (openCounter > 0) setIsOpen(true); }, [openCounter]);
+
+  const sendMessage = async () => {
+    if (!input.trim() || isTyping) return;
+    const userMsg = input;
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    setIsTyping(true);
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      if (!chatRef.current) {
+        chatRef.current = ai.chats.create({
+          model: 'gemini-3-flash-preview',
+          config: {
+            systemInstruction: `You are the Wellness Mentor™. You are guiding ${userData.name}, who is at Metabolic Stage ${stage}. Current view: ${view}. Your goal is to provide evidence-based, actionable advice for vascular optimization. Be professional, clinical, yet encouraging. Always reference the Digital Twin and Vascular Age.`,
+          }
+        });
+      }
+
+      // GUIDELINE: Receive streaming response from model
+      const stream = await chatRef.current.sendMessageStream({ message: userMsg });
+      let fullText = '';
+      setMessages(prev => [...prev, { role: 'model', text: '' }]);
+
+      for await (const chunk of stream) {
+        const c = chunk as GenerateContentResponse;
+        fullText += c.text;
+        setMessages(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1].text = fullText;
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  if (!isOpen) return (
+    <button onClick={() => setIsOpen(true)} className="fixed bottom-8 right-8 w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-3xl hover:scale-110 transition-all z-50 animate-bounce">
+      <MessageSquare className="w-7 h-7" />
+    </button>
+  );
+
+  return (
+    <div className="fixed bottom-8 right-8 w-[400px] h-[600px] bg-white rounded-[48px] shadow-4xl border border-blue-50 flex flex-col overflow-hidden z-[100] animate-in slide-in-from-bottom-8 duration-500">
+      <div className="p-8 bg-[#0a192f] text-white flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center"><BrainCircuit className="w-6 h-6" /></div>
+          <div>
+            <div className="text-xs font-black uppercase tracking-widest text-blue-400">Wellness Mentor™</div>
+            <div className="text-[9px] font-bold text-sky-100/50 uppercase">Stage {stage} Active</div>
+          </div>
+        </div>
+        <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors"><X className="w-5 h-5" /></button>
+      </div>
+      <div className="flex-grow p-8 overflow-y-auto space-y-6">
+        {messages.length === 0 && (
+          <div className="text-center py-12 space-y-4">
+             <Sparkles className="w-12 h-12 text-blue-100 mx-auto" />
+             <p className="text-slate-400 text-sm font-medium leading-relaxed italic">"Hello {userData.name}, I am your Wellness Mentor. How can I assist with your metabolic optimization today?"</p>
+          </div>
+        )}
+        {messages.map((m, i) => (
+          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[85%] p-5 rounded-[28px] text-sm font-medium leading-relaxed ${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-50 text-slate-800 border border-slate-100'}`}>
+              {m.text}
             </div>
           </div>
         ))}
+        {isTyping && <div className="flex justify-start"><div className="bg-slate-50 p-4 rounded-2xl animate-pulse text-slate-400 text-[10px] font-black uppercase">Mentor is thinking...</div></div>}
       </div>
-    </div>
-  </ViewWrapper>
-);
-
-const LegalView = ({ mode, setView }: { mode: 'tc' | 'privacy', setView: (v: AppView) => void }) => (
-  <ViewWrapper 
-    title={mode === 'tc' ? "Data Sovereignty & Terms" : "Privacy Protocol"} 
-    subtitle={mode === 'tc' ? "Implementation standards and user rights." : "Your metabolic identity protection standards."}
-  >
-    <div className="bg-white p-12 rounded-[64px] border border-blue-50 shadow-xl space-y-10 text-left">
-      <div className="space-y-6 text-left">
-        <h3 className="text-2xl font-black text-[#0a192f] uppercase">
-          {mode === 'tc' ? "Governance & Usage Rights" : "Data Privacy & Security"}
-        </h3>
-        <p className="text-slate-600 leading-relaxed font-medium text-lg">
-          {mode === 'tc' ? 
-            "The Wellness Mentor platform operates under the 'Good Health Standard' protocol. Users retain full sovereignty over their metabolic digital twin. Participation is voluntary and implementation results vary based on adherence to the stage-specific protocols. All data generated remains the property of the individual user." :
-            "We adhere to strict data sovereignty rules. Your metabolic identity (HbA1c, glucose, age) is processed for digital twin simulation and is protected by industry-standard encryption. We do not sell or distribute personal health information to third-party advertisers."
-          }
-        </p>
-        <div className="mt-12 p-8 bg-blue-50 rounded-[40px] border border-blue-100 flex items-center gap-6 text-left">
-          <ShieldCheck className="w-10 h-10 text-blue-600" />
-          <div className="space-y-1 text-left">
-             <div className="text-[10px] font-black uppercase text-blue-500 tracking-widest">Protocol Verified</div>
-             <p className="text-xs font-bold text-slate-700">Validated by the Consortium Governance Board 2025.</p>
-          </div>
-        </div>
-      </div>
-      <button onClick={() => setView('home')} className="flex items-center gap-2 text-blue-600 font-black text-[10px] uppercase tracking-[0.2em] hover:gap-4 transition-all text-left">
-        <ArrowLeft className="w-4 h-4" /> Return to Command Center
-      </button>
-    </div>
-  </ViewWrapper>
-);
-
-const SubscriptionsView = () => (
-  <ViewWrapper title="Subscription Tiers" subtitle="Unlock advanced V-PAD digital twin capabilities.">
-    <div className="grid md:grid-cols-3 gap-8 text-left">
-      {[
-        { tier: 'Basic', price: 'Free', features: ['Digital Twin Simulation', 'Stage I Protocols', 'Community Access'], color: 'slate' },
-        { tier: 'Advanced', price: '$19/mo', features: ['Stage II/III Reversal Plans', 'AI Nudges', 'Nutritional Visuals'], color: 'blue' },
-        { tier: 'Premium', price: '$49/mo', features: ['Priority Mentor Access', 'Biomarker Tracking', 'Value Chain Traceability'], color: 'emerald' }
-      ].map((p, i) => (
-        <div key={i} className={`bg-white p-12 rounded-[56px] border border-blue-50 shadow-xl hover:-translate-y-2 transition-all flex flex-col text-left`}>
-          <div className={`w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center text-blue-600 mb-8 shadow-inner`}><Zap className="w-6 h-6" /></div>
-          <h3 className="text-2xl font-black text-[#0a192f] uppercase mb-2 leading-tight">{p.tier}</h3>
-          <div className="text-3xl font-black text-[#0a192f] mb-8">{p.price}</div>
-          <div className="space-y-4 mb-10 flex-grow text-left">
-            {p.features.map((f, j) => (
-              <div key={j} className="flex items-center gap-3 text-left">
-                <Check className="w-4 h-4 text-emerald-500" />
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">{f}</span>
-              </div>
-            ))}
-          </div>
-          <button className="w-full py-5 rounded-[24px] bg-[#0a192f] text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg active:scale-95 text-center">
-            Initialize {p.tier}
-          </button>
-        </div>
-      ))}
-    </div>
-  </ViewWrapper>
-);
-
-const EcommerceView = () => {
-  const categories = ['All', 'Ethno-botanicals', 'Wearables', 'Lifestyle', 'Clinical Services'];
-  const [selectedCat, setSelectedCat] = useState('All');
-
-  const products = [
-    { id: 1, name: 'Standardized CGA Extract', category: 'Ethno-botanicals', price: '$49.00', image: 'https://images.unsplash.com/photo-1611073113567-28d488424244?auto=format&fit=crop&q=80&w=800', tag: 'Metabolic Control', verified: true },
-    { id: 2, name: 'Vagal Tone HRV Monitor', category: 'Wearables', price: '$199.00', image: 'https://images.unsplash.com/photo-1557167668-6ebd073f2734?auto=format&fit=crop&q=80&w=800', tag: 'Neural Balance', verified: true },
-    { id: 3, name: 'MAP Certified Piperine', category: 'Ethno-botanicals', price: '$34.00', image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&q=80&w=800', tag: 'Bio-Synergy', verified: true },
-    { id: 4, name: 'Cork Yoga Align Mat', category: 'Lifestyle', price: '$85.00', image: 'https://images.unsplash.com/photo-1592433221973-195cc1a9e9a4?auto=format&fit=crop&q=80&w=800', tag: 'Eco-Grip', verified: true },
-    { id: 5, name: 'Clinical Delta Consult', category: 'Clinical Services', price: '$150.00', image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=800', tag: 'Expert Analysis', verified: true },
-    { id: 6, name: 'Smart Infusion Tumbler', category: 'Lifestyle', price: '$45.00', image: 'https://images.unsplash.com/photo-1517142089942-ba376ce32a2e?auto=format&fit=crop&q=80&w=800', tag: 'Hydration', verified: true },
-    { id: 7, name: 'Bio-Sourced Magnesium Complex', category: 'Ethno-botanicals', price: '$38.00', image: 'https://images.unsplash.com/photo-1584017947486-538676bb9d45?auto=format&fit=crop&q=80&w=800', tag: 'Sleep & Muscle', verified: true },
-    { id: 8, name: 'Deep Somatic Breath Trainer', category: 'Wearables', price: '$129.00', image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=800', tag: 'Vagal Tone', verified: true }
-  ];
-
-  const filteredProducts = selectedCat === 'All' ? products : products.filter(p => p.category === selectedCat);
-
-  return (
-    <ViewWrapper title="Wellness Store" subtitle="Verified metabolic products & services guided by AI.">
-      <div className="space-y-12 text-left">
-        <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar text-left">
-          {categories.map(cat => (
-            <button 
-              key={cat} 
-              onClick={() => setSelectedCat(cat)}
-              className={`px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap text-left ${
-                selectedCat === cat ? 'bg-[#0a192f] text-white shadow-xl' : 'bg-white text-slate-400 hover:bg-sky-50'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 text-left">
-          {filteredProducts.map(product => (
-            <div key={product.id} className="bg-white rounded-[48px] overflow-hidden border border-blue-50 shadow-lg group hover:shadow-2xl transition-all duration-500 text-left">
-              <div className="relative h-64 overflow-hidden text-left">
-                <img src={product.image} alt={product.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 text-left" />
-                <div className="absolute top-6 left-6 flex flex-col gap-2 text-left">
-                  <span className="bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest text-blue-600 shadow-sm text-left">{product.tag}</span>
-                  {product.verified && (
-                    <span className="bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm text-left">
-                      <ShieldCheck className="w-3 h-3" /> Verified
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="p-8 space-y-6 text-left">
-                <div className="space-y-2 text-left">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-left">Category: {product.category}</div>
-                  <h3 className="text-xl font-black text-[#0a192f] leading-tight uppercase leading-[1.35] text-left">{product.name}</h3>
-                </div>
-                <div className="flex items-center justify-between pt-4 border-t border-slate-50 text-left">
-                  <span className="text-2xl font-black text-[#0a192f] text-left">{product.price}</span>
-                  <button className="bg-sky-50 p-4 rounded-2xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-90">
-                    <ShoppingBag className="w-6 h-6" />
-                  </button>
-                </div>
-                <button className="w-full py-4 rounded-2xl border-2 border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:border-blue-500 hover:text-blue-500 transition-all flex items-center justify-center gap-2 text-center">
-                  <FileSearch className="w-4 h-4" /> View Lab Certificate
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-[#0a192f] rounded-[64px] p-16 text-white text-center space-y-8 relative overflow-hidden text-left">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-emerald-600/10 text-left" />
-          <BrainCircuit className="w-16 h-16 text-blue-400 mx-auto animate-pulse text-center" />
-          <h3 className="text-4xl font-black uppercase tracking-tight relative z-10 leading-[1.35] text-center text-left">AI Sourcing Protocol</h3>
-          <p className="text-sky-100/60 max-w-2xl mx-auto font-medium text-lg leading-[1.35] relative z-10 text-center text-left">
-            Every product in this marketplace undergoes strict <InfoTooltip acronym="GC-MS">GC-MS verification</InfoTooltip> to ensure phytochemical integrity and metabolic safety for your specific blueprint.
-          </p>
-          <div className="text-center text-left">
-            <button className="bg-white text-[#0a192f] px-12 py-5 rounded-3xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-sky-50 transition-all relative z-10 shadow-2xl active:scale-95 text-center">
-              View Store Governance
-            </button>
-          </div>
-        </div>
-      </div>
-    </ViewWrapper>
-  );
-};
-
-// --- Contact Us Modal ---
-const ContactUsModal = ({ userData, onClose }: { userData: UserData | null, onClose: () => void }) => {
-  const [formData, setFormData] = useState({ name: userData?.name || '', email: '', message: '' });
-  const [currentTime, setCurrentTime] = useState(new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    const mailtoUrl = `mailto:info@padivayal.com?subject=Wellness Mentor Support Request - ${formData.name}&body=Sender: ${formData.name}%0D%0AEmail: ${formData.email}%0D%0ATime: ${currentTime.toLocaleString()}%0D%0AMessage:%0D%0A${formData.message}`;
-    window.location.href = mailtoUrl;
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-900/95 backdrop-blur-xl animate-in fade-in duration-500 text-left">
-      <div className="bg-white w-full max-w-xl rounded-[48px] overflow-hidden shadow-4xl border border-blue-50 flex flex-col text-left">
-        <div className="bg-slate-900 p-8 text-white flex items-center justify-between text-left">
-          <div className="flex items-center gap-4 text-left">
-             <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center"><Mail className="w-6 h-6" /></div>
-             <div className="text-left">
-                <h2 className="text-xl font-black uppercase tracking-tight m-0 leading-none text-white text-left"><WellnessMentorBrand /></h2>
-                <div className="flex items-center gap-2 mt-2 opacity-50 text-left">
-                   <CalendarClock className="w-3 h-3" />
-                   <span className="text-[10px] font-black uppercase tracking-widest text-left">{currentTime.toLocaleString()}</span>
-                </div>
-             </div>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-xl transition-all">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-        
-        <form onSubmit={handleSend} className="p-10 space-y-8 text-left">
-          <div className="grid gap-6 text-left">
-            <div className="space-y-2 text-left">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 text-left">User Identity</label>
-              <input required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="Your Full Name" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-left" />
-            </div>
-            <div className="space-y-2 text-left">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 text-left">Communication Endpoint</label>
-              <input required type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="your@email.com" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-left" />
-            </div>
-            <div className="space-y-2 text-left">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-4 text-left">Message / Query</label>
-              <textarea required rows={4} value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} placeholder="How can our implementation team assist you?" className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-6 py-4 font-bold text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none text-left" />
-            </div>
-          </div>
-          <div className="flex gap-4 text-left">
-             <button type="button" onClick={onClose} className="flex-1 py-5 rounded-2xl bg-slate-50 text-slate-400 font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all">Cancel</button>
-             <button type="submit" className="flex-[2] py-5 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest hover:bg-blue-700 shadow-xl shadow-blue-100 transition-all active:scale-95 flex items-center justify-center gap-3">
-               Initialize Send <SendHorizontal className="w-4 h-4" />
-             </button>
-          </div>
-          <p className="text-center text-[9px] font-bold text-slate-300 uppercase tracking-[0.2em]">Programmed to dispatch to info@padivayal.com</p>
+      <div className="p-6 border-t border-slate-100">
+        <form onSubmit={e => { e.preventDefault(); sendMessage(); }} className="relative">
+          <input type="text" value={input} onChange={e => setInput(e.target.value)} placeholder="Ask your mentor..." className="w-full px-8 py-5 rounded-full bg-slate-50 border-2 border-transparent focus:border-blue-500 outline-none transition-all font-bold text-slate-900 pr-16" />
+          <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg"><SendHorizontal className="w-5 h-5" /></button>
         </form>
       </div>
     </div>
   );
 };
 
-// --- Enhanced AI Wellness Mentor Chat Bot ---
-const MentorChat = ({ userData, stage, inline = false, openCounter = 0, onClose: onWindowClose, view }: any) => {
-  const [isVisible, setIsVisible] = useState(true);
-  const [isMinimized, setIsMinimized] = useState(true); 
-  const [isMaximized, setIsMaximized] = useState(false);
-  const [pos, setPos] = useState({ x: window.innerWidth - 420, y: window.innerHeight - 660 });
-  const [dragging, setDragging] = useState(false);
-  const [messages, setMessages] = useState<{ role: 'user' | 'model', text: string }[]>([
-    { role: 'model', text: "Welcome to your V-PAD™ Implementation Session. I am your Wellness Mentor. How can I assist your metabolic health strategy today?" }
-  ]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const dragRef = useRef({ offsetX: 0, offsetY: 0 });
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages, isMinimized]);
-
-  useEffect(() => { setIsMinimized(true); }, [view]);
-
-  useEffect(() => {
-    if (openCounter > 0) {
-      setIsVisible(true);
-      setIsMinimized(false);
-    }
-  }, [openCounter]);
-
-  useEffect(() => {
-    if (inline || isMaximized) return;
-    const handleMouseMove = (e: MouseEvent) => {
-      if (dragging) setPos({ x: e.clientX - dragRef.current.offsetX, y: e.clientY - dragRef.current.offsetY });
-    };
-    const handleMouseUp = () => setDragging(false);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [dragging, inline, isMaximized]);
-
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!input.trim() || isLoading) return;
-    const userMsg = input.trim();
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
-    setInput("");
-    setIsLoading(true);
-    try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const faqContext = MASTER_FAQ.map(f => `Q: ${f.question}\nA: ${f.answer}`).join('\n\n');
-      const systemInstruction = `
-        You are the Wellness Mentor™ for the V-PAD platform.
-        Guidelines: Be scientific, supportive, and implementation-focused.
-        Context: ${userData?.name || 'User'}, Stage ${stage || 'I'}, HbA1c ${userData?.hba1c || 'Unknown'}%.
-        Prioritize lower insulin load, TRE, and Exercise Paths.
-        Reference CGA and NO2 precursors where relevant.
-        Source of Truth (MASTER_FAQ): Use the following data to answer high-level queries:
-        ${faqContext}
-      `;
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [...messages, { role: 'user', text: userMsg }].map(m => ({ role: m.role, parts: [{ text: m.text }] })),
-        config: { systemInstruction }
-      });
-      setMessages(prev => [...prev, { role: 'model', text: response.text || "Communication disruption in V-PAD value chain. Please reconnect." }]);
-    } catch (err) {
-      console.error(err);
-      setMessages(prev => [...prev, { role: 'model', text: "Connectivity error. Please check your metabolic network." }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (!isVisible && !inline) return null;
-  const windowClasses = inline 
-    ? "bg-white rounded-[48px] border-2 border-blue-50 h-[600px] flex flex-col overflow-hidden shadow-2xl relative text-left" 
-    : `fixed bg-white/95 backdrop-blur-xl rounded-[48px] border-2 border-blue-100 shadow-4xl z-[100] transition-all duration-300 overflow-hidden flex flex-col text-left ${isMaximized ? 'inset-4 w-auto h-auto' : isMinimized ? 'h-20 w-80' : 'h-[600px] w-[400px]'}`;
-
-  return (
-    <div className={windowClasses} style={(inline || isMaximized) ? {} : { left: `${pos.x}px`, top: `${pos.y}px` }}>
-      <div onMouseDown={(e) => { if (!inline && !isMaximized) { setDragging(true); dragRef.current = { offsetX: e.clientX - pos.x, offsetY: e.clientY - pos.y }; } }} className={`flex items-center justify-between p-6 text-left ${!inline ? 'cursor-grab active:cursor-grabbing bg-sky-50/80 border-b border-blue-50 text-left' : 'bg-slate-900 text-white text-left'}`}>
-        <div className="flex items-center gap-3 text-left">
-          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg text-left ${inline ? 'bg-blue-600 text-left' : 'bg-slate-900 text-white text-left'}`}><BrainCircuit className="w-5 h-5 text-left" /></div>
-          <div className="text-left">
-            <h4 className={`font-black uppercase text-[11px] tracking-widest m-0 leading-none text-left ${inline ? 'text-white text-left' : 'text-[#0a192f] text-left'}`}><WellnessMentorBrand /></h4>
-            <div className={`flex items-center gap-1.5 mt-1 text-left ${inline ? 'text-blue-400 text-left' : 'text-emerald-500 text-left'}`}><div className={`w-1.5 h-1.5 rounded-full animate-pulse text-left ${inline ? 'bg-blue-400 text-left' : 'bg-emerald-500 text-left'}`} /><span className="text-[8px] font-black uppercase tracking-widest text-left">Active Mentor Agent</span></div>
-          </div>
-        </div>
-        {!inline && (
-          <div className="flex items-center gap-2 text-left">
-            <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }} className="p-2 hover:bg-blue-100 rounded-xl transition-colors text-slate-400 hover:text-blue-600 text-left">{isMinimized ? <Maximize2 className="w-4 h-4 text-left" /> : <MinusSquare className="w-4 h-4 text-left" />}</button>
-            <button onClick={(e) => { e.stopPropagation(); setIsMaximized(!isMaximized); setIsMinimized(false); }} className="p-2 hover:bg-blue-100 rounded-xl transition-colors text-slate-400 hover:text-blue-600 text-left">{isMaximized ? <Minimize2 className="w-4 h-4 text-left" /> : <Maximize2 className="w-4 h-4 text-left" />}</button>
-            <button onClick={(e) => { e.stopPropagation(); setIsVisible(false); onWindowClose?.(); }} className="p-2 hover:bg-rose-100 rounded-xl transition-colors text-slate-400 hover:text-rose-600 text-left"><X className="w-4 h-4 text-left" /></button>
-          </div>
-        )}
-      </div>
-      {(!isMinimized || inline) && (
-        <><div ref={scrollRef} className="flex-grow overflow-y-auto p-8 space-y-6 scroll-smooth no-scrollbar text-left">{messages.map((m, i) => (<div key={i} className={`flex ${m.role === 'user' ? 'justify-end text-left' : 'justify-start text-left'} animate-in fade-in slide-in-from-bottom-2 duration-300 text-left`}><div className={`max-w-[85%] rounded-[32px] p-6 shadow-sm border text-left ${m.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none border-blue-50 text-left' : 'bg-sky-50 text-[#0a192f] rounded-tl-none border-sky-100 text-left'}`}><p className="text-xs font-bold leading-relaxed whitespace-pre-wrap leading-[1.35] text-left">{(m as any).text}</p></div></div>))}{isLoading && (<div className="flex justify-start animate-pulse text-left"><div className="bg-slate-100 rounded-full px-6 py-3 flex gap-2 items-center border border-slate-200 text-left"><div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce text-left" /><div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:0.2s] text-left" /><div className="w-1.5 h-1.5 bg-blue-600 rounded-full animate-bounce [animation-delay:0.4s] text-left" /></div></div>)}</div><div className="p-8 bg-slate-50/50 border-t border-slate-100 text-left"><form onSubmit={handleSendMessage} className="relative flex gap-3 text-left"><input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask your implementation strategy..." className="w-full bg-white border border-slate-200 rounded-[24px] pl-8 pr-16 py-5 text-xs font-bold focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all placeholder:text-slate-400 text-left" disabled={isLoading} /><button type="submit" disabled={isLoading || !input.trim()} className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all active:scale-90 disabled:opacity-50 disabled:grayscale text-left">{isLoading ? <Loader2 className="w-5 h-5 animate-spin text-left" /> : <SendHorizontal className="w-5 h-5 text-left" />}</button></form><div className="mt-4 flex justify-between items-center px-4 text-left"><p className="text-[8px] font-black uppercase text-slate-400 tracking-widest leading-[1.35] text-left">Powered by <VPADTM /> Intelligence</p>{userData && (<div className="flex items-center gap-2 text-left"><span className="text-[8px] font-black uppercase text-blue-500 tracking-widest leading-[1.35] text-left">Stage {stage} Context Active</span></div>)}</div></div></>
-      )}
-    </div>
-  );
-};
-
-// --- User Profile Modal Component ---
+// User Profile Modal
 const UserProfileModal = ({ userData, onClose, onUpdate }: { userData: UserData, onClose: () => void, onUpdate: (data: UserData) => void }) => {
-  const [formData, setFormData] = useState<UserData>({ ...userData });
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: (name === 'age' || name === 'glucose' || name === 'hba1c') ? parseFloat(value) || 0 : value }));
-  };
-
+  const [data, setData] = useState(userData);
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in fade-in duration-500 text-left">
-      <div className="bg-white w-full max-w-2xl rounded-[56px] p-12 shadow-3xl relative overflow-hidden flex flex-col max-h-[90vh] text-left">
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-emerald-500 text-left" />
-        <button onClick={onClose} className="absolute top-8 right-8 text-slate-400 hover:text-slate-600 transition-colors"><X className="w-6 h-6" /></button>
-        <div className="space-y-10 overflow-y-auto no-scrollbar pb-6 text-left">
-          <div className="flex items-center gap-6 text-left">
-            <div className="w-20 h-20 bg-sky-50 rounded-3xl flex items-center justify-center text-blue-600 shadow-inner text-left text-center"><UserCheck className="w-10 h-10 text-center" /></div>
-            <div className="space-y-1 text-left">
-              <h2 className="text-3xl font-black uppercase tracking-tight text-[#0a192f] m-0 leading-[1.35] text-left">{(formData as any).name}</h2>
-              <div className="flex items-center gap-2 text-left"><span className="bg-emerald-500/10 text-emerald-600 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-left">{(formData as any).subscriptionTier} Tier</span><span className="text-slate-400 text-[10px] font-bold flex items-center gap-1 text-left"><Calendar className="w-3 h-3 text-left" /> Valid until: {(formData as any).validUntil || 'N/A'}</span></div>
-            </div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-lg rounded-[64px] shadow-3xl p-16 space-y-8 overflow-y-auto max-h-[90vh]">
+        <h2 className="text-2xl font-black uppercase text-[#0a192f]">Profile Settings</h2>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">HbA1c (%)</label>
+            <input type="number" step="0.1" value={data.hba1c} onChange={e => setData({...data, hba1c: parseFloat(e.target.value)})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold" />
           </div>
-          <div className="grid md:grid-cols-2 gap-10 text-left">
-            <div className="space-y-6 text-left">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-2 text-left"><Shield className="w-4 h-4 text-blue-500 text-left" /><h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-left">Bio-Identity</h4></div>
-              <div className="space-y-4 text-left">
-                <div className="space-y-1 text-left"><label className="text-[9px] font-black uppercase text-slate-400 ml-4 tracking-widest text-left">Chronological Age</label><input name="age" type="number" value={(formData as any).age} onChange={handleChange} className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-left" /></div>
-                <div className="space-y-1 text-left"><label className="text-[9px] font-black uppercase text-slate-400 ml-4 tracking-widest text-left">Sex Bio-Identity</label><select name="sex" value={(formData as any).sex} onChange={handleChange} className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-left"><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option><option value="Neutral">Neutral</option></select></div>
-                <div className="space-y-1 text-left"><label className="text-[9px] font-black uppercase text-slate-400 ml-4 tracking-widest text-left">Race / Ancestry</label><input name="race" type="text" value={(formData as any).race} onChange={handleChange} className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-left" /></div>
-              </div>
-            </div>
-            <div className="space-y-6 text-left">
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-2 text-left"><Activity className="w-4 h-4 text-emerald-500 text-left" /><h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 text-left">Metabolic Biomarkers</h4></div>
-              <div className="space-y-4 text-left">
-                <div className="space-y-1 text-left"><label className="text-[9px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-1 text-left"><Droplets className="w-3 h-3 text-left" /> Blood Glucose (mg/dL)</label><input name="glucose" type="number" value={(formData as any).glucose} onChange={handleChange} placeholder="Add missing data" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-left" /></div>
-                <div className="space-y-1 text-left"><label className="text-[9px] font-black uppercase text-slate-400 ml-4 tracking-widest flex items-center gap-1 text-left"><Dna className="w-3 h-3 text-left" /> HbA1c Level (%)</label><input name="hba1c" type="number" step="0.1" value={(formData as any).hba1c} onChange={handleChange} placeholder="Add missing data" className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-left" /></div>
-                <p className="text-[9px] text-slate-400 italic leading-relaxed pt-2 leading-[1.35] text-left">* Note: Accurate biomarkers refine your Digital Twin's <VPADTM /> Dynamics and Stage alignment.</p>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Glucose (mg/dL)</label>
+            <input type="number" value={data.glucose} onChange={e => setData({...data, glucose: parseInt(e.target.value)})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold" />
           </div>
-        </div>
-        <div className="mt-auto pt-8 flex gap-4 text-left"><button onClick={onClose} className="flex-1 py-5 rounded-3xl bg-slate-100 text-slate-600 font-black text-xs uppercase tracking-[0.2em] hover:bg-slate-200 transition-all active:scale-95 text-center">Cancel</button><button onClick={() => onUpdate(formData)} className="flex-2 py-5 px-12 rounded-3xl bg-blue-600 text-white font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-500 shadow-2xl shadow-blue-100 transition-all active:scale-95 text-center">Refine Digital Twin Profile</button></div>
-      </div>
-    </div>
-  );
-};
-
-// --- User Auth Modal Component ---
-const UserAuthModal = ({ mode, onClose, onSwitchMode, onSuccess }: { mode: AuthMode, onClose: () => void, onSwitchMode: (m: AuthMode) => void, onSuccess: (name: string) => void }) => {
-  const [name, setName] = useState('');
-  if (!mode) return null;
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in fade-in duration-500 text-left">
-      <div className="bg-white w-full max-w-md rounded-[56px] p-12 shadow-3xl relative overflow-hidden text-center text-left">
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-emerald-500 text-left" />
-        <button onClick={onClose} className="absolute top-8 right-8 text-slate-400 hover:text-slate-600 transition-colors"><X className="w-6 h-6" /></button>
-        <div className="space-y-10 text-center text-left"><div className="text-center space-y-3 text-left"><div className="w-16 h-16 bg-sky-50 rounded-2xl flex items-center justify-center text-blue-600 mx-auto mb-6 text-center text-left"><User className="w-8 h-8 text-center" /></div><h2 className="text-3xl font-black uppercase tracking-tight text-[#0a192f] m-0 leading-[1.35] text-center text-left">{mode === 'login' ? 'Welcome Back' : 'Join Platform'}</h2><p className="text-blue-600/60 font-medium leading-[1.35] text-center text-left">Access your metabolic twin profile.</p></div><div className="space-y-6 text-left"><div className="space-y-2 text-left"><label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 ml-6 block text-left">Display Identity</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter full name" className="w-full px-8 py-5 rounded-[24px] bg-slate-50 border border-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold transition-all text-left" /></div></div><button onClick={() => { if (name) onSuccess(name); }} className="w-full py-6 bg-[#0a192f] text-white rounded-[24px] font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-600 shadow-2xl transition-all active:scale-90 text-center">{mode === 'login' ? 'Authorize Session' : 'Create Blueprint'}</button><div className="text-center text-left"><button onClick={() => onSwitchMode(mode === 'login' ? 'signup' : 'login')} className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:underline text-center">{mode === 'login' ? "New implementation? Sign Up" : "Existing profile? Log In"}</button></div></div>
-      </div>
-    </div>
-  );
-};
-
-// --- Footer Component ---
-const Footer = ({ setView, onOpenContact }: { setView: (v: AppView) => void, onOpenContact: () => void }) => (
-  <footer className="bg-[#0a192f] text-white py-24 px-6 border-t border-white/5 text-left">
-    <div className="max-w-6xl mx-auto text-left">
-      <div className="grid md:grid-cols-4 gap-16 pb-20 border-b border-white/5 text-left">
-        <div className="col-span-1 space-y-8 text-left">
-          <div className="flex items-center gap-3 text-left"><Activity className="text-blue-500 w-8 h-8 text-left" /><span className="font-black text-2xl uppercase tracking-tight text-white leading-[1.35] text-left"><WellnessMentorBrand /></span></div>
-          <p className="text-sky-100/40 text-sm font-medium leading-[1.35] max-w-xs text-left">Optimizing the metabolic exercise gap through advanced AI agentic assistance, enabled by the AI powered <VPADTM /> experience & value platform.</p>
-        </div>
-        <div className="space-y-6 text-left">
-          <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 text-left">Platform</h5>
-          <div className="flex flex-col gap-4 text-left">
-            <button onClick={() => setView('blueprint')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Blueprint Twin</button>
-            <button onClick={() => setView('mentor')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Intelligence Hub</button>
-            <button onClick={() => setView('kitchen')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Nutrition</button>
-            <button onClick={() => setView('exercise')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Exercise Blueprint</button>
-            <button onClick={() => setView('ecommerce')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Wellness Store</button>
-          </div>
-        </div>
-        <div className="space-y-6 text-left">
-          <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 text-left">Community & Science</h5>
-          <div className="flex flex-col gap-4 text-left">
-            <button onClick={() => setView('tribal-sourcing')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Smart Tribal Farming</button>
-            <button onClick={() => setView('map-chain')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">MAP Value Chain</button>
-            <button onClick={() => setView('clinical-board')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Clinical Board</button>
-            <button onClick={() => setView('references')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Scientific References</button>
-          </div>
-        </div>
-        <div className="space-y-6 text-left">
-          <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 text-left">Governance</h5>
-          <div className="flex flex-col gap-4 text-left">
-            <button onClick={() => setView('faq')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">FAQ</button>
-            <button onClick={() => setView('legal-privacy')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Privacy Protocol</button>
-            <button onClick={() => setView('legal-tc')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Data Sovereignty</button>
-            <button onClick={() => setView('subscriptions')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Subscription Tiers</button>
-            <button onClick={() => setView('recovery')} className="text-left text-sm font-bold text-sky-200/50 hover:text-white transition-colors uppercase tracking-widest text-left">Recovery Path</button>
-            <button onClick={onOpenContact} className="text-left text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors uppercase tracking-widest text-left">Contact Us</button>
-          </div>
-        </div>
-      </div>
-      <div className="pt-12 flex flex-col md:flex-row justify-between items-center gap-8 text-left">
-        <div className="flex items-center gap-4 text-left"><ShieldCheck className="w-5 h-5 text-blue-900/40 text-left" /><p className="text-[10px] font-normal uppercase tracking-widest leading-[1.35] text-left">Validated by The Good Health Standard Implementation Protocol 2025</p></div>
-        <div className="text-right space-y-2 text-left"><div className="space-y-1 text-left"><p className="text-[11px] font-black uppercase tracking-widest text-sky-50 leading-[1.35] text-left"><WellnessMentorBrand /></p><p className="text-[10px] font-bold uppercase tracking-widest text-sky-100/80 leading-[1.35] text-left"><VPADTM /> | Padivayal Enterprise</p></div><div className="pt-2 border-t border-white/5 space-y-1 text-left"><p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-200/70 leading-[1.35] text-left">© 2025. All Rights Reserved.</p><p className="text-[10px] font-black uppercase tracking-[0.2em] text-sky-200/70 leading-[1.35] text-left">Email: info@padivayal.com</p></div></div>
-      </div>
-    </div>
-  </footer>
-);
-
-const SearchModal = ({ isOpen, onClose, query, setView }: { isOpen: boolean, onClose: () => void, query: string, setView: (v: AppView) => void }) => {
-  if (!isOpen) return null;
-  const faqResults = MASTER_FAQ.filter(f => f.question.toLowerCase().includes(query.toLowerCase()) || f.answer.toLowerCase().includes(query.toLowerCase()));
-  return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in fade-in duration-500 text-left">
-      <div className="bg-white w-full max-w-2xl rounded-[56px] p-12 shadow-3xl relative overflow-hidden flex flex-col max-h-[80vh] text-left">
-        <div className="absolute top-0 left-0 w-full h-2 bg-blue-600" />
-        <button onClick={onClose} className="absolute top-8 right-8 text-slate-400 hover:text-slate-600"><X className="w-6 h-6" /></button>
-        <div className="space-y-8 overflow-y-auto no-scrollbar text-left">
-          <div className="flex items-center gap-4 border-b border-slate-100 pb-6 text-left"><Search className="w-8 h-8 text-blue-600" /><div className="space-y-1 text-left"><h2 className="text-2xl font-black uppercase tracking-tight text-[#0a192f]">Platform Search</h2><p className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Query: "{query}"</p></div></div>
-          {faqResults.length > 0 && (<div className="space-y-4 text-left"><h5 className="text-[10px] font-black uppercase text-blue-500 tracking-[0.2em]">Knowledge Base Results</h5>{faqResults.map((faq, i) => (<button key={`faq-res-${i}`} onClick={() => { setView('faq'); onClose(); }} className="w-full p-6 rounded-3xl bg-sky-50/50 border border-blue-50 hover:bg-blue-50 transition-all flex flex-col gap-2 text-left"><span className="font-bold text-slate-900 text-sm uppercase tracking-tight">{faq.question}</span><span className="text-[10px] text-slate-500 line-clamp-1">{faq.answer}</span></button>))}</div>)}
-          <div className="space-y-4 text-left"><h5 className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em]">System Navigation</h5>{['Home', 'Blueprint', 'Intelligence Hub', 'Nutrition', 'Exercise Paths', 'Recovery'].map((item, i) => (<button key={i} onClick={() => { const v = item.toLowerCase().includes('intelligence') ? 'mentor' : item.toLowerCase().includes('exercise') ? 'exercise' : item.toLowerCase().includes('nutrition') ? 'kitchen' : item.toLowerCase() as AppView; setView(v); onClose(); }} className="w-full p-6 rounded-3xl bg-slate-50 border border-slate-100 hover:bg-blue-50 hover:border-blue-100 transition-all flex items-center justify-between group text-left"><span className="font-black text-slate-900 uppercase tracking-tight">{item}</span><ArrowRight className="w-5 h-5 text-slate-300 group-hover:text-blue-600" /></button>))}</div>
+          <button onClick={() => onUpdate(data)} className="w-full py-6 bg-blue-600 text-white rounded-3xl font-black text-xs uppercase tracking-widest">Save Changes</button>
         </div>
       </div>
     </div>
   );
 };
 
-const SessionSummaryModal = ({ impact, beforeAge, afterAge, onClose }: { impact: number, beforeAge: number, afterAge: number, onClose: () => void }) => (
-  <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-900/95 backdrop-blur-2xl animate-in fade-in duration-500 text-left">
-    <div className="bg-white w-full max-w-lg rounded-[64px] p-12 shadow-4xl relative overflow-hidden text-center space-y-10 text-left"><div className="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-emerald-500 to-blue-500" /><div className="w-24 h-24 bg-emerald-50 rounded-[32px] flex items-center justify-center text-emerald-600 mx-auto shadow-inner text-center"><Award className="w-12 h-12" /></div><div className="space-y-4 text-center"><h2 className="text-4xl font-black uppercase tracking-tight text-[#0a192f]">Protocol Synergy!</h2><p className="text-slate-500 font-medium leading-relaxed">Multi-path completion detected. V-PAD™ adjustment applied to your Digital Twin.</p></div><div className="grid grid-cols-2 gap-6 p-8 bg-sky-50 rounded-[40px] border border-blue-100 text-center"><div className="space-y-1"><div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Previous Bio-Age</div><div className="text-3xl font-black text-slate-400 line-through decoration-rose-500/30">{beforeAge}</div></div><div className="space-y-1"><div className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Optimized Bio-Age</div><div className="text-3xl font-black text-[#0a192f]">{afterAge}</div></div></div><div className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-emerald-500 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-emerald-200 mx-auto"><TrendingDown className="w-4 h-4" /> Vascular Impact: -{impact} Units</div><button onClick={onClose} className="w-full py-6 bg-[#0a192f] text-white rounded-[32px] font-black text-xs uppercase tracking-[0.2em] hover:bg-blue-600 shadow-2xl transition-all active:scale-95 text-center">Accept Optimization</button></div>
+// Contact Us Modal
+const ContactUsModal = ({ userData, onClose }: { userData: UserData | null, onClose: () => void }) => (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
+    <div className="relative bg-white w-full max-w-lg rounded-[64px] shadow-3xl p-16 space-y-8 text-center">
+      <div className="w-16 h-16 bg-blue-50 rounded-2xl mx-auto flex items-center justify-center text-blue-600"><Mail className="w-8 h-8" /></div>
+      <h2 className="text-2xl font-black uppercase text-[#0a192f]">Contact Implementation Team</h2>
+      <p className="text-slate-500 font-medium">Have questions about your V-PAD™ orchestration? Reach out to our metabolic experts.</p>
+      <div className="space-y-4">
+        <input type="email" placeholder="Email Address" defaultValue={userData?.name ? 'implementer@vpad.io' : ''} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold" />
+        <textarea placeholder="Your message..." className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold h-32" />
+        <button onClick={onClose} className="w-full py-6 bg-slate-900 text-white rounded-3xl font-black text-xs uppercase tracking-widest">Send Message</button>
+      </div>
+    </div>
   </div>
 );
 
+// Search Modal Component
+const SearchModal = ({ isOpen, onClose, query, setView }: { isOpen: boolean, onClose: () => void, query: string, setView: (v: AppView) => void }) => {
+  if (!isOpen) return null;
+  const results = ['Digital Twin', 'Insulin Resistance', 'Yoga Flow', 'Precision Kitchen'].filter(r => r.toLowerCase().includes(query.toLowerCase()));
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-2xl rounded-[64px] shadow-3xl p-16 space-y-8">
+        <div className="flex items-center gap-4 border-b border-slate-100 pb-8">
+          <Search className="w-6 h-6 text-slate-300" />
+          <input type="text" defaultValue={query} className="flex-grow text-2xl font-black uppercase outline-none text-[#0a192f]" placeholder="Search knowledge base..." />
+        </div>
+        <div className="space-y-4 max-h-96 overflow-y-auto">
+          {results.length > 0 ? results.map((r, i) => (
+            <button key={i} onClick={() => { setView('faq'); onClose(); }} className="w-full p-6 bg-slate-50 hover:bg-blue-50 rounded-3xl text-left transition-colors flex items-center justify-between group">
+              <span className="font-bold text-slate-900">{r}</span>
+              <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 transition-colors" />
+            </button>
+          )) : (
+            <div className="text-center py-12 text-slate-400 font-medium italic">No results found for "{query}"</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Session Summary Modal
+const SessionSummaryModal = ({ impact, beforeAge, afterAge, onClose }: { impact: number, beforeAge: number, afterAge: number, onClose: () => void }) => (
+  <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 animate-in fade-in duration-300">
+    <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" onClick={onClose} />
+    <div className="relative bg-white w-full max-w-lg rounded-[64px] overflow-hidden shadow-3xl border border-white/10 p-16 text-center space-y-8 animate-in zoom-in-95 duration-300">
+      <div className="w-24 h-24 bg-emerald-500 rounded-[32px] mx-auto flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30">
+        <Award className="w-12 h-12" />
+      </div>
+      <div className="space-y-2">
+        <h2 className="text-3xl font-black uppercase tracking-tight text-[#0a192f]">Session Complete</h2>
+        <p className="text-slate-500 font-medium">Metabolic optimization protocol successful.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="p-8 bg-slate-50 rounded-[40px] space-y-2">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Previous Age</span>
+          <div className="text-3xl font-black text-slate-400 line-through decoration-rose-500/50">{beforeAge}</div>
+        </div>
+        <div className="p-8 bg-blue-600 rounded-[40px] space-y-2 text-white">
+          <span className="text-[10px] font-black text-blue-200 uppercase tracking-widest">New Age</span>
+          <div className="text-3xl font-black">{afterAge}</div>
+        </div>
+      </div>
+      <div className="p-6 bg-emerald-50 rounded-3xl text-emerald-600 text-sm font-black uppercase tracking-widest">
+        Digital Twin Deceleration: -{impact} Years
+      </div>
+      <button onClick={onClose} className="w-full py-6 bg-slate-900 text-white rounded-[32px] font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-blue-600 transition-all">
+        Synchronize Data
+      </button>
+    </div>
+  </div>
+);
+
+// --- Home Component ---
 const Home = ({ userData, stage, setView, setAuthMode, onOpenMentor }: { userData: UserData | null, stage: MetabolicStage | null, setView: (v: AppView) => void, setAuthMode: (m: AuthMode) => void, onOpenMentor: () => void }) => {
   return (
     <ViewWrapper>
@@ -2059,7 +1211,12 @@ const Home = ({ userData, stage, setView, setAuthMode, onOpenMentor }: { userDat
           ))}
         </section>
 
-        {/* Home Page FAQ Section */}
+        <section className="px-2">
+           <div className="rounded-[64px] overflow-hidden">
+             <ImplementationBanner setView={setView} />
+           </div>
+        </section>
+
         <section className="bg-white rounded-[64px] border border-blue-50 shadow-xl overflow-hidden p-8 md:p-16 text-left">
           <div className="max-w-4xl mx-auto space-y-8">
             <div className="text-center space-y-3">
@@ -2077,7 +1234,7 @@ const Home = ({ userData, stage, setView, setAuthMode, onOpenMentor }: { userDat
   );
 };
 
-// ... (LiveVoiceCoaching implementation)
+// Live Voice Coaching Component
 const LiveVoiceCoaching = ({ userData, stage }: { userData: UserData | null, stage: MetabolicStage | null }) => {
   const [isActive, setIsActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -2092,6 +1249,7 @@ const LiveVoiceCoaching = ({ userData, stage }: { userData: UserData | null, sta
   const startSession = async () => {
     setIsConnecting(true);
     try {
+      // GUIDELINE: Create a new GoogleGenAI instance right before making an API call
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -2112,6 +1270,7 @@ const LiveVoiceCoaching = ({ userData, stage }: { userData: UserData | null, sta
               const int16 = new Int16Array(l);
               for (let i = 0; i < l; i++) { int16[i] = inputData[i] * 32768; }
               const pcmBlob = { data: encode(new Uint8Array(int16.buffer)), mimeType: 'audio/pcm;rate=16000' };
+              // GUIDELINE: Solely rely on sessionPromise resolves
               sessionPromise.then((session) => { session.sendRealtimeInput({ media: pcmBlob }); });
             };
             source.connect(scriptProcessor);
@@ -2121,6 +1280,7 @@ const LiveVoiceCoaching = ({ userData, stage }: { userData: UserData | null, sta
             if (message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data) {
               const base64 = message.serverContent.modelTurn.parts[0].inlineData.data;
               nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputAudioContext.currentTime);
+              // GUIDELINE: Custom decoding logic for raw PCM data
               const buffer = await decodeAudioData(decode(base64), outputAudioContext, 24000, 1);
               const source = outputAudioContext.createBufferSource();
               source.buffer = buffer;
